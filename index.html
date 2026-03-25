@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FabLab Management System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ====== INTRO SCREEN ====== -->
+  <div id="screen-intro" class="screen active">
+    <div id="intro-text"></div>
+  </div>
+
+  <!-- ====== CLOCK SCREEN ====== -->
+  <div id="screen-clock" class="screen">
+    <div id="clock-display">00:00:00</div>
+    <div id="clock-date"></div>
+  </div>
+
+  <!-- ====== GREETING + ACTIVITY SCREEN ====== -->
+  <div id="screen-greeting" class="screen">
+    <div id="greeting-text"></div>
+    <div class="activity-grid" id="activity-grid"></div>
+  </div>
+
+  <!-- ====== NFC FEEDBACK OVERLAY ====== -->
+  <div id="nfc-feedback"></div>
+
+  <!-- ====== CRT OVERLAY (scanlines + vignette) ====== -->
+  <div class="crt-scanlines"></div>
+  <div class="crt-vignette"></div>
+
+  <!-- ====== SIMULATION PANEL (remove in final product) ====== -->
+  <div id="sim-panel">
+    <span class="sim-label">[ SIM NFC ]</span>
+  </div>
+
+  <!-- Audio -->
+  <audio id="audio-intro"        src="audio/intro.ogg"        preload="auto"></audio>
+  <audio id="audio-login"        src="audio/login.ogg"        preload="auto"></audio>
+  <audio id="audio-topic-select" src="audio/topic_select.ogg" preload="auto"></audio>
+  <audio id="audio-logout"       src="audio/logout.ogg"       preload="auto"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
