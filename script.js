@@ -32,6 +32,16 @@ const DEFAULT_HELPER_TEXT = 'Prisloni ključ za vstop/izstop...';
 // =============================================================================
 // Audio
 // =============================================================================
+const KEY_PRESS_SOUND_PATHS = Array.from(
+  { length: 15 },
+  (_, idx) => 'audio/key press' + (idx + 1) + '.ogg'
+);
+const keyPressSoundPool = KEY_PRESS_SOUND_PATHS.map(path => {
+  const audio = new Audio(path);
+  audio.preload = 'auto';
+  return audio;
+});
+
 function playSound(id) {
   const el = document.getElementById('audio-' + id);
   if (!el) {
@@ -43,6 +53,16 @@ function playSound(id) {
     console.warn('[AUDIO] Could not play "' + id + '":', err.message)
   );
   console.log('[AUDIO] Playing:', id);
+}
+
+function playRandomKeyPressSound() {
+  if (!keyPressSoundPool.length) return;
+  const randomIdx = Math.floor(Math.random() * keyPressSoundPool.length);
+  const baseAudio = keyPressSoundPool[randomIdx];
+  const audio = baseAudio.cloneNode();
+  audio.play().catch(err =>
+    console.warn('[AUDIO] Could not play key press:', err.message)
+  );
 }
 
 // =============================================================================
@@ -344,6 +364,7 @@ function runIntro() {
     if (charIdx < line.length) {
       const textNode = document.createTextNode(line[charIdx]);
       currentLineEl.insertBefore(textNode, cursor);
+      playRandomKeyPressSound();
       charIdx++;
       setTimeout(typeNext, 55 + Math.random() * 65);
     } else {
