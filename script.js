@@ -28,6 +28,8 @@ let currentUser = null;
 let helperMessageTimeout = null;
 let nfcFlowInProgress = false;
 const DEFAULT_HELPER_TEXT = 'Prisloni ključ za vstop/izstop...';
+const DEFAULT_CONFIG = Object.freeze({ animationsEnabled: true });
+let appConfig = { ...DEFAULT_CONFIG };
 
 // =============================================================================
 // Audio
@@ -72,6 +74,11 @@ function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + screenId);
   if (el) {
+    if (appConfig.animationsEnabled) {
+      el.classList.remove('screen-animated-entry');
+      void el.offsetWidth;
+      el.classList.add('screen-animated-entry');
+    }
     el.classList.add('active');
   } else {
     console.error('[SCREEN] Unknown screen:', screenId);
@@ -82,6 +89,32 @@ function showScreen(screenId) {
 // =============================================================================
 // NFC feedback overlay
 // =============================================================================
+function applyAnimationMode() {
+  document.body.classList.toggle('animations-off', !appConfig.animationsEnabled);
+  console.log('[CONFIG] Animations enabled:', appConfig.animationsEnabled);
+}
+
+async function loadConfig() {
+  try {
+    const response = await fetch('settings.json', { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
+    }
+
+    const data = await response.json();
+    appConfig = {
+      ...DEFAULT_CONFIG,
+      ...data,
+      animationsEnabled: data.animationsEnabled !== false,
+    };
+  } catch (error) {
+    console.warn('[CONFIG] Could not load settings.json, using defaults:', error.message);
+    appConfig = { ...DEFAULT_CONFIG };
+  }
+
+  applyAnimationMode();
+}
+
 function randomChars(length = 16) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=';
   let output = '';
@@ -92,6 +125,10 @@ function randomChars(length = 16) {
 }
 
 function runNfcScramble(durationMs = 500, tickMs = 50) {
+  if (!appConfig.animationsEnabled) {
+    return Promise.resolve();
+  }
+
   const helper = document.getElementById('clock-helper');
   helper.textContent = randomChars(16);
 
@@ -119,7 +156,7 @@ function sleep(ms) {
 
 function setClockState(state = '') {
   const clockScreen = document.getElementById('screen-clock');
-  clockScreen.classList.remove('success-state', 'error-state');
+  clockScreen.classList.remove('success-state', 'error-state', 'logout-state');
   if (state) {
     clockScreen.classList.add(state);
   }
@@ -135,10 +172,16 @@ function setClockHelperMessage(message, color = 'white', durationMs = 0) {
 
   helper.textContent = message;
   setClockState('');
-  helper.style.color = color === 'red' ? 'var(--red)' : 'var(--white)';
-  helper.style.textShadow = color === 'red'
-    ? '0 0 12px rgba(255,34,34,0.45)'
-    : '0 0 8px rgba(224,224,224,0.3)';
+  if (color === 'red') {
+    helper.style.color = 'var(--red)';
+    helper.style.textShadow = '0 0 12px rgba(255,34,34,0.45)';
+  } else if (color === 'orange') {
+    helper.style.color = 'var(--orange)';
+    helper.style.textShadow = '0 0 12px rgba(255,140,0,0.45)';
+  } else {
+    helper.style.color = 'var(--white)';
+    helper.style.textShadow = '0 0 8px rgba(224,224,224,0.3)';
+  }
 
   if (durationMs > 0) {
     helperMessageTimeout = setTimeout(() => {
@@ -214,17 +257,18 @@ async function handleNfcRead(nfcId) {
 
     console.log('[NFC] Recognized user:', user.name, '(', nfcId, ')');
 
-    setClockHelperMessage(user.name);
-    setClockState('success-state');
+    const today = getTodayKey();
+    const sessionKey = user.id + '-' + today;
+    const session = sessions[sessionKey];
+    const isLogoutFlow = Boolean(session && session.loginTime && !session.logoutTime);
+
+    setClockHelperMessage(user.name, isLogoutFlow ? 'orange' : 'white');
+    setClockState(isLogoutFlow ? 'logout-state' : 'success-state');
     playSound('login');
     await sleep(900);
     setClockState('');
 
-    const today = getTodayKey();
-    const sessionKey = user.id + '-' + today;
-    const session = sessions[sessionKey];
-
-    if (session && session.loginTime && !session.logoutTime) {
+    if (isLogoutFlow) {
       doLogout(user, sessionKey);
     } else {
       doLogin(user, sessionKey);
@@ -326,6 +370,12 @@ function updateClock() {
 // Intro animation
 // =============================================================================
 function runIntro() {
+  if (!appConfig.animationsEnabled) {
+    document.getElementById('intro-text').innerHTML =
+      '<div class="intro-line">FABLAB</div><div class="intro-line">MANAGEMENT</div><div class="intro-line">SYSTEM</div>';
+    setTimeout(() => showScreen('clock'), 400);
+    return;
+  }
   console.log('[INTRO] Starting intro animation');
   playSound('intro');
 
@@ -429,10 +479,12 @@ function buildSimPanel() {
 // =============================================================================
 // Initialisation
 // =============================================================================
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   console.log('=== FabLab Management System starting ===');
   console.log('[INIT] Test users:', JSON.stringify(TEST_USERS, null, 2));
   console.log('[INIT] Activities:', ACTIVITIES.join(', '));
+
+  await loadConfig();
 
   buildActivityGrid();
   buildSimPanel();
