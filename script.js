@@ -25,6 +25,7 @@ const sessions = {};
 
 // --- App state ---
 let currentUser = null;
+let helperMessageTimeout = null;
 
 // =============================================================================
 // Audio
@@ -59,9 +60,9 @@ function showScreen(screenId) {
 // =============================================================================
 // NFC feedback overlay
 // =============================================================================
-function showNfcFeedback(success, callback, durationMs = 850) {
+function showNfcFeedback(success, message, callback, durationMs = 850) {
   const fb = document.getElementById('nfc-feedback');
-  fb.textContent = success ? '[ NFC OK ]' : '[ NFC NAPAKA ]';
+  fb.textContent = message;
   fb.className = success ? 'success' : 'fail';
   console.log('[NFC FEEDBACK]', success ? 'SUCCESS' : 'FAIL');
 
@@ -69,6 +70,61 @@ function showNfcFeedback(success, callback, durationMs = 850) {
     fb.className = '';
     if (callback) callback();
   }, durationMs);
+}
+
+function randomChars(length = 16) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=';
+  let output = '';
+  for (let i = 0; i < length; i++) {
+    output += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return output;
+}
+
+function runNfcScramble(durationMs = 500, tickMs = 50) {
+  const fb = document.getElementById('nfc-feedback');
+  fb.className = 'scramble';
+  fb.textContent = randomChars(16);
+
+  return new Promise(resolve => {
+    const interval = setInterval(() => {
+      fb.textContent = randomChars(16);
+    }, tickMs);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      resolve();
+    }, durationMs);
+  });
+}
+
+function clearNfcFeedback() {
+  const fb = document.getElementById('nfc-feedback');
+  fb.className = '';
+  fb.textContent = '';
+}
+
+function setClockHelperMessage(message, color = 'white', durationMs = 0) {
+  const helper = document.getElementById('clock-helper');
+  const clockScreen = document.getElementById('screen-clock');
+
+  if (helperMessageTimeout) {
+    clearTimeout(helperMessageTimeout);
+    helperMessageTimeout = null;
+  }
+
+  helper.textContent = message;
+  clockScreen.classList.remove('error-state');
+  helper.style.color = color === 'red' ? 'var(--red)' : 'var(--white)';
+  helper.style.textShadow = color === 'red'
+    ? '0 0 12px rgba(255,34,34,0.45)'
+    : '0 0 8px rgba(224,224,224,0.3)';
+
+  if (durationMs > 0) {
+    helperMessageTimeout = setTimeout(() => {
+      setClockHelperMessage('Prisloni ključ za vstop/izstop...');
+    }, durationMs);
+  }
 }
 
 // =============================================================================
@@ -110,14 +166,22 @@ function formatDate(date) {
 // =============================================================================
 // NFC read handler
 // =============================================================================
-function handleNfcRead(nfcId) {
+async function handleNfcRead(nfcId) {
   console.log('[NFC] Card presented. Raw ID:', nfcId);
 
   const user = TEST_USERS.find(u => u.id === nfcId);
+  const clockScreen = document.getElementById('screen-clock');
+
+  await runNfcScramble(500, 50);
 
   if (!user) {
     console.log('[NFC] Unknown card — not in database. ID:', nfcId);
-    showNfcFeedback(false);
+    clockScreen.classList.add('error-state');
+    showNfcFeedback(false, 'Prisloni ponovno...', () => {
+      clockScreen.classList.remove('error-state');
+      clearNfcFeedback();
+      setClockHelperMessage('Prisloni ključ za vstop/izstop...');
+    }, 2000);
     return;
   }
 
@@ -129,10 +193,16 @@ function handleNfcRead(nfcId) {
 
   if (session && session.loginTime && !session.logoutTime) {
     // Session open today → log out
-    showNfcFeedback(true, () => doLogout(user, sessionKey));
+    showNfcFeedback(true, user.name, () => {
+      clearNfcFeedback();
+      doLogout(user, sessionKey);
+    }, 850);
   } else {
     // No open session today → log in
-    showNfcFeedback(true, () => doLogin(user, sessionKey));
+    showNfcFeedback(true, user.name, () => {
+      clearNfcFeedback();
+      doLogin(user, sessionKey);
+    }, 850);
   }
 }
 
@@ -179,6 +249,7 @@ function doLogout(user, sessionKey) {
   playSound('logout');
   currentUser = null;
   showScreen('clock');
+  setClockHelperMessage('Izpisan si. Nasvidenje!', 'white', 2500);
 }
 
 // =============================================================================
@@ -205,6 +276,7 @@ function selectActivity(activity) {
 
   playSound('topic-select');
   showScreen('clock');
+  setClockHelperMessage('Vpisan si v FabLab.', 'white', 2500);
   currentUser = null;
 }
 
