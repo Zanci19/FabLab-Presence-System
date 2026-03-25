@@ -100,7 +100,9 @@ function applyAnimationMode() {
 
 async function loadConfig() {
   try {
-    const response = await fetch('settings.json', { cache: 'no-store' });
+    // Use /api/settings to avoid CORS issues when the page is served
+    // by the Express backend (same-origin API call, no CORS boundary).
+    const response = await fetch('/api/settings', { cache: 'no-store' });
     if (!response.ok) {
       throw new Error('HTTP ' + response.status);
     }
@@ -112,7 +114,7 @@ async function loadConfig() {
       animationsEnabled: data.animationsEnabled !== false,
     };
   } catch (error) {
-    console.warn('[CONFIG] Could not load settings.json, using defaults:', error.message);
+    console.warn('[CONFIG] Could not load settings, using defaults:', error.message);
     appConfig = { ...DEFAULT_CONFIG };
   }
 

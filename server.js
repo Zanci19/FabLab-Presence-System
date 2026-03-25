@@ -253,6 +253,21 @@ app.get('/api/session/active/:nfcId', apiLimiter, (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// API — Get app settings (avoids CORS issues with direct file fetch)
+// GET /api/settings
+// ---------------------------------------------------------------------------
+app.get('/api/settings', apiLimiter, (req, res) => {
+  const settingsPath = path.join(__dirname, 'public', 'settings.json');
+  try {
+    const data = JSON.parse(require('fs').readFileSync(settingsPath, 'utf8'));
+    res.json(data);
+  } catch (err) {
+    console.warn('[SETTINGS] Could not read settings.json:', err.message);
+    res.json({ animationsEnabled: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
 const PORT = process.env.PORT || 3000;

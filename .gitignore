@@ -1,2 +1,4 @@
 node_modules/
 fablab.db
+fablab.db-shm
+fablab.db-wal
