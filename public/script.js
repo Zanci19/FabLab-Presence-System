@@ -99,20 +99,48 @@ function applyAnimationMode() {
 }
 
 async function loadConfig() {
+  const coerceAnimationsEnabled = value => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'false') return false;
+      if (normalized === 'true') return true;
+    }
+    return DEFAULT_CONFIG.animationsEnabled;
+  };
+
+  const parseConfig = data => ({
+    ...DEFAULT_CONFIG,
+    ...data,
+    animationsEnabled: coerceAnimationsEnabled(data?.animationsEnabled),
+  });
+
+  const configUrls = ['/api/settings', './settings.json'];
+
   try {
-    // Use /api/settings to avoid CORS issues when the page is served
-    // by the Express backend (same-origin API call, no CORS boundary).
-    const response = await fetch('/api/settings', { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error('HTTP ' + response.status);
+    let configData = null;
+    let lastError  = null;
+
+    for (const url of configUrls) {
+      try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        configData = await response.json();
+        console.log('[CONFIG] Loaded settings from:', url);
+        break;
+      } catch (error) {
+        lastError = error;
+        console.warn('[CONFIG] Failed to load settings from', url + ':', error.message);
+      }
     }
 
-    const data = await response.json();
-    appConfig = {
-      ...DEFAULT_CONFIG,
-      ...data,
-      animationsEnabled: data.animationsEnabled !== false,
-    };
+    if (!configData) {
+      throw lastError || new Error('No settings source available.');
+    }
+
+    appConfig = parseConfig(configData);
   } catch (error) {
     console.warn('[CONFIG] Could not load settings, using defaults:', error.message);
     appConfig = { ...DEFAULT_CONFIG };
