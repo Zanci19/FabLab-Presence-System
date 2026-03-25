@@ -39,6 +39,14 @@ body {
   animation: crt-flicker 12s infinite;
 }
 
+body.animations-off,
+body.animations-off *,
+body.animations-off *::before,
+body.animations-off *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
 /* --- Scanlines overlay --- */
 .crt-scanlines {
   position: fixed;
@@ -80,6 +88,15 @@ body {
 }
 .screen.active {
   display: flex;
+}
+
+.screen-animated-entry {
+  animation: screen-pop 0.35s ease-out;
+}
+
+@keyframes screen-pop {
+  0% { opacity: 0; transform: scale(0.98); filter: blur(2px); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
 }
 
 .screen * {
@@ -156,6 +173,8 @@ body {
    CLOCK SCREEN
    ============================================================================= */
 #clock-display {
+  animation: clock-pulse 2.6s ease-in-out infinite;
+
   font-size: clamp(3.5rem, 19vw, 14rem);
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -174,6 +193,8 @@ body {
 }
 
 #clock-helper {
+  animation: helper-float 2.8s ease-in-out infinite;
+
   margin-top: 0.8rem;
   font-size: clamp(0.8rem, 2.3vw, 1.7rem);
   color: var(--white);
@@ -186,6 +207,8 @@ body {
 #screen-clock.success-state #clock-display,
 #screen-clock.success-state #clock-date,
 #screen-clock.success-state #clock-helper {
+  animation: helper-float 2.8s ease-in-out infinite;
+
   color: var(--green);
   text-shadow: 0 0 14px rgba(0,255,65,0.45);
 }
@@ -193,14 +216,27 @@ body {
 #screen-clock.error-state #clock-display,
 #screen-clock.error-state #clock-date,
 #screen-clock.error-state #clock-helper {
+  animation: helper-float 2.8s ease-in-out infinite;
+
   color: var(--red);
   text-shadow: 0 0 14px rgba(255,34,34,0.45);
+}
+
+#screen-clock.logout-state #clock-display,
+#screen-clock.logout-state #clock-date,
+#screen-clock.logout-state #clock-helper {
+  animation: helper-float 2.8s ease-in-out infinite;
+
+  color: var(--orange);
+  text-shadow: 0 0 14px rgba(255,140,0,0.45);
 }
 
 /* =============================================================================
    GREETING + ACTIVITY SCREEN
    ============================================================================= */
 #greeting-text {
+  animation: greeting-glow 2.2s ease-in-out infinite;
+
   font-size: clamp(1.3rem, 3.8vw, 2.8rem);
   text-align: center;
   line-height: 1.9;
@@ -217,6 +253,9 @@ body {
 }
 
 .activity-btn {
+  position: relative;
+  overflow: hidden;
+
   background: transparent;
   border: 1px solid #3a3a3a;
   color: #aaa;
@@ -236,6 +275,36 @@ body {
   border-color: var(--white);
   box-shadow: 0 0 12px rgba(224,224,224,0.5);
   outline: none;
+}
+
+
+.activity-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 25%, rgba(224, 224, 224, 0.28) 50%, transparent 75%);
+  transform: translateX(-130%);
+  animation: button-sweep 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes button-sweep {
+  to { transform: translateX(130%); }
+}
+
+@keyframes clock-pulse {
+  0%, 100% { text-shadow: 0 0 8px rgba(224,224,224,0.4), 0 0 22px rgba(224,224,224,0.15); }
+  50% { text-shadow: 0 0 14px rgba(224,224,224,0.55), 0 0 34px rgba(224,224,224,0.22); }
+}
+
+@keyframes helper-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes greeting-glow {
+  0%, 100% { text-shadow: 0 0 10px rgba(224,224,224,0.3); }
+  50% { text-shadow: 0 0 20px rgba(224,224,224,0.45); }
 }
 
 /* =============================================================================
