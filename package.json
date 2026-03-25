@@ -1,0 +1,14 @@
+{
+  "name": "fablab-presence-system",
+  "version": "1.0.0",
+  "description": "FabLab Presence System with NFC tag support and SQLite logging",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.9.1",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.3.1"
+  }
+}
