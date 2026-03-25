@@ -19,9 +19,15 @@
 
   <!-- ====== CLOCK SCREEN ====== -->
   <div id="screen-clock" class="screen">
-    <div id="clock-display">00:00:00</div>
-    <div id="clock-date"></div>
-    <div id="clock-helper">Prisloni ključ za vstop/izstop...</div>
+    <div id="clock-main">
+      <div id="clock-display">00:00:00</div>
+      <div id="clock-date"></div>
+      <div id="clock-helper">Prisloni ključ za vstop/izstop...</div>
+    </div>
+    <div id="clock-log-panel">
+      <div id="clock-log-title">ZADNJI VPISI</div>
+      <ul id="clock-log-list"></ul>
+    </div>
   </div>
 
   <!-- ====== GREETING + ACTIVITY SCREEN ====== -->
@@ -40,6 +46,73 @@
       <button id="name-entry-cancel" type="button">PREKLIČI</button>
     </div>
   </div>
+
+  <!-- ====== ADMIN PASSWORD SCREEN ====== -->
+  <div id="screen-admin-password" class="screen">
+    <div id="admin-pass-title">ADMIN MODE</div>
+    <div id="admin-pass-hint">Vnesi geslo za dostop</div>
+    <div id="admin-pass-form">
+      <input id="admin-pass-input" type="password" maxlength="64"
+             placeholder="Geslo..." autocomplete="off" spellcheck="false" />
+      <button id="admin-pass-submit" type="button">VSTOPI</button>
+      <button id="admin-pass-cancel" type="button">PREKLIČI</button>
+    </div>
+  </div>
+
+  <!-- ====== ADMIN PANEL SCREEN ====== -->
+  <div id="screen-admin" class="screen">
+    <div id="admin-header">
+      <span id="admin-title">ADMIN PANEL</span>
+      <button id="admin-exit" type="button">✕ IZHOD</button>
+    </div>
+    <div id="admin-content">
+
+      <!-- Main menu -->
+      <div id="admin-view-menu" class="admin-view">
+        <button class="admin-menu-btn" id="admin-btn-adduser">
+          <span class="admin-menu-icon">＋</span>DODAJ KARTO
+        </button>
+        <button class="admin-menu-btn" id="admin-btn-deluser">
+          <span class="admin-menu-icon">✕</span>IZBRIŠI KARTO
+        </button>
+        <button class="admin-menu-btn" id="admin-btn-logs">
+          <span class="admin-menu-icon">≡</span>VPISI DNEVNIK
+        </button>
+        <button class="admin-menu-btn" id="admin-btn-export">
+          <span class="admin-menu-icon">↓</span>IZVOZI CSV
+        </button>
+      </div>
+
+      <!-- Add user view -->
+      <div id="admin-view-adduser" class="admin-view" style="display:none">
+        <div id="admin-adduser-status">PRISLONI KARTO ZA DODAJANJE...</div>
+        <button class="admin-back-btn" id="admin-adduser-cancel">PREKLIČI</button>
+      </div>
+
+      <!-- Delete user view -->
+      <div id="admin-view-deluser" class="admin-view" style="display:none">
+        <div id="admin-deluser-title">REGISTRIRANE KARTICE</div>
+        <div id="admin-deluser-list"></div>
+        <button class="admin-back-btn" id="admin-deluser-back">NAZAJ</button>
+      </div>
+
+      <!-- Logs view -->
+      <div id="admin-view-logs" class="admin-view" style="display:none">
+        <div id="admin-logs-title">VPISI DNEVNIK</div>
+        <div id="admin-logs-table-wrap"><table id="admin-logs-table"></table></div>
+        <div id="admin-logs-nav">
+          <button class="admin-nav-btn" id="admin-logs-prev">◄</button>
+          <span id="admin-logs-page">1</span>
+          <button class="admin-nav-btn" id="admin-logs-next">►</button>
+          <button class="admin-back-btn" id="admin-logs-back">NAZAJ</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Admin status bar -->
+  <div id="admin-status-bar" style="opacity:0"></div>
 
   <!-- ====== NFC FEEDBACK OVERLAY ====== -->
   <div id="nfc-feedback"></div>

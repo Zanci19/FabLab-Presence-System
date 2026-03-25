@@ -31,6 +31,11 @@ let activeSessionId  = null;   // DB session id of the current open session
 let pendingNfcId     = null;   // NFC ID waiting for name entry
 let helperMessageTimeout  = null;
 let nfcFlowInProgress     = false;
+let adminPassword    = null;   // set after successful admin login
+let adminAddUserMode = false;  // true when admin is waiting to scan a card for registration
+let adminLogsPage    = 1;
+let adminLogsTotal   = 0;
+const ADMIN_LOGS_PER_PAGE = 20;
 const DEFAULT_HELPER_TEXT = 'Prisloni ključ za vstop/izstop...';
 const DEFAULT_CONFIG = Object.freeze({ animationsEnabled: true });
 let appConfig = { ...DEFAULT_CONFIG };
@@ -69,6 +74,31 @@ function playRandomKeyPressSound() {
   audio.play().catch(err =>
     console.warn('[AUDIO] Could not play key press:', err.message)
   );
+}
+
+function playErrorBeep() {
+  // Two descending-pitch pulses — "wrong/error" double buzz
+  const ERROR_BEEP_BASE_HZ   = 180;  // starting frequency (Hz)
+  const ERROR_BEEP_STEP_HZ   = 30;   // lower each pulse by this amount
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.2].forEach((startOffset, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.value = ERROR_BEEP_BASE_HZ - i * ERROR_BEEP_STEP_HZ;
+      gain.gain.setValueAtTime(0,    ctx.currentTime + startOffset);
+      gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + startOffset + 0.02);
+      gain.gain.linearRampToValueAtTime(0,    ctx.currentTime + startOffset + 0.18);
+      osc.start(ctx.currentTime + startOffset);
+      osc.stop(ctx.currentTime  + startOffset + 0.18);
+    });
+    console.log('[AUDIO] Playing error beep');
+  } catch (err) {
+    console.warn('[AUDIO] Error beep failed:', err.message);
+  }
 }
 
 // =============================================================================
@@ -225,6 +255,53 @@ function setClockHelperMessage(message, color = 'white', durationMs = 0) {
 }
 
 // =============================================================================
+// Log panel
+// =============================================================================
+async function refreshLogPanel() {
+  try {
+    const data = await apiFetch('GET', '/api/sessions/recent?limit=7');
+    const list = document.getElementById('clock-log-list');
+    list.innerHTML = '';
+    // Sessions are returned newest-first (ORDER BY id DESC) — index 0 is the latest
+    (data.sessions || []).forEach((s, idx) => {
+      const li = document.createElement('li');
+      if (idx === 0) li.classList.add('log-entry-new');
+      const d = new Date(s.login_time);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const nameEl = document.createElement('span');
+      nameEl.className = 'log-name';
+      nameEl.textContent = s.name;
+      const timeEl = document.createElement('span');
+      timeEl.className = 'log-time';
+      timeEl.textContent = hh + ':' + mm;
+      li.appendChild(nameEl);
+      li.appendChild(timeEl);
+      list.appendChild(li);
+    });
+  } catch (err) {
+    console.warn('[LOG PANEL] Could not refresh:', err.message);
+  }
+}
+
+// =============================================================================
+// Admin status bar
+// =============================================================================
+let adminStatusTimeout = null;
+function showAdminStatus(msg, color, durationMs = 2500) {
+  const bar = document.getElementById('admin-status-bar');
+  bar.textContent = msg;
+  bar.style.color = color === 'green' ? 'var(--green)'
+    : color === 'red' ? 'var(--red)'
+    : 'var(--orange)';
+  bar.style.opacity = '1';
+  if (adminStatusTimeout) clearTimeout(adminStatusTimeout);
+  adminStatusTimeout = setTimeout(() => {
+    bar.style.opacity = '0';
+  }, durationMs);
+}
+
+// =============================================================================
 // Date / time helpers
 // =============================================================================
 function getTodayKey() {
@@ -267,10 +344,10 @@ function normaliseNfcId(raw) {
   return String(raw).replace(/:/g, '').toUpperCase();
 }
 
-async function apiFetch(method, url, body) {
+async function apiFetch(method, url, body, extraHeaders) {
   const opts = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
   };
   if (body !== undefined) {
     opts.body = JSON.stringify(body);
@@ -287,6 +364,15 @@ async function apiFetch(method, url, body) {
 // NFC read handler
 // =============================================================================
 async function handleNfcRead(nfcId) {
+  // --- Admin "add user" mode: capture this scan ---
+  if (adminAddUserMode) {
+    adminAddUserMode = false;
+    const normId = normaliseNfcId(nfcId);
+    console.log('[ADMIN] NFC scan in add-user mode. ID:', normId);
+    await handleAdminAddUserScan(normId);
+    return;
+  }
+
   if (nfcFlowInProgress) {
     console.warn('[NFC] Ignoring read while previous flow is active.');
     return;
@@ -316,8 +402,9 @@ async function handleNfcRead(nfcId) {
     }
 
     if (!userResult.found) {
-      // Unknown tag — prompt for name
+      // Unknown tag — play error beep, then prompt for name
       console.log('[NFC] Unknown card. ID:', normId, '— prompting for name.');
+      playErrorBeep();
       pendingNfcId = normId;
       showNameEntry();
       return;
@@ -376,6 +463,7 @@ async function doLogin(user) {
   currentUser = user;
   setClockHelperMessage(DEFAULT_HELPER_TEXT);
   showGreeting(user);
+  refreshLogPanel();
 }
 
 // =============================================================================
@@ -397,6 +485,7 @@ async function doLogout(user, sessionId) {
   playSound('logout');
   showScreen('clock');
   setClockHelperMessage('Izpisan si. Nasvidenje!', 'white', 2500);
+  refreshLogPanel();
 }
 
 // =============================================================================
@@ -456,21 +545,40 @@ async function submitNameEntry() {
     return;
   }
 
+  // Restore default title for future uses
+  document.getElementById('name-entry-title').innerHTML =
+    'Neznan ključ.<br>Vpiši svoje ime:';
+
   console.log('[NAME ENTRY] Registering:', name, '(', pendingNfcId, ')');
 
   try {
     await apiFetch('POST', '/api/user', { nfcId: pendingNfcId, name });
   } catch (err) {
     console.error('[NAME ENTRY] Failed to register user:', err.message);
-    showScreen('clock');
-    setClockHelperMessage('Napaka pri registraciji.', 'red', 2500);
     pendingNfcId = null;
     nfcFlowInProgress = false;
+    // Return to admin panel if we were in admin context
+    if (adminPassword) {
+      showAdminPanel();
+      showAdminStatus('Napaka pri registraciji.', 'red');
+    } else {
+      showScreen('clock');
+      setClockHelperMessage('Napaka pri registraciji.', 'red', 2500);
+    }
     return;
   }
 
   const user = { id: pendingNfcId, name };
   pendingNfcId = null;
+
+  // If in admin context, return to admin panel
+  if (adminPassword) {
+    nfcFlowInProgress = false;
+    showAdminPanel();
+    showAdminStatus('Uporabnik ' + name + ' dodan!', 'green');
+    console.log('[ADMIN] User registered:', name);
+    return;
+  }
 
   setClockHelperMessage(user.name, 'white');
   setClockState('success-state');
@@ -486,10 +594,18 @@ async function submitNameEntry() {
 }
 
 function cancelNameEntry() {
+  // Restore default title
+  document.getElementById('name-entry-title').innerHTML =
+    'Neznan ključ.<br>Vpiši svoje ime:';
   pendingNfcId = null;
   nfcFlowInProgress = false;
-  showScreen('clock');
-  setClockHelperMessage(DEFAULT_HELPER_TEXT);
+  // Return to admin panel if we were in admin context
+  if (adminPassword) {
+    showAdminPanel();
+  } else {
+    showScreen('clock');
+    setClockHelperMessage(DEFAULT_HELPER_TEXT);
+  }
 }
 
 // =============================================================================
@@ -627,6 +743,278 @@ function buildSimPanel() {
 }
 
 // =============================================================================
+// Admin mode — password screen
+// =============================================================================
+function showAdminPasswordScreen() {
+  const input = document.getElementById('admin-pass-input');
+  input.value = '';
+  showScreen('admin-password');
+  setTimeout(() => input.focus(), 100);
+}
+
+async function submitAdminPassword() {
+  const input    = document.getElementById('admin-pass-input');
+  const password = input.value;
+
+  if (!password) {
+    input.focus();
+    return;
+  }
+
+  try {
+    const result = await apiFetch('POST', '/api/admin/verify', { adminPassword: password });
+    if (!result.ok) {
+      playErrorBeep();
+      input.value = '';
+      input.focus();
+      return;
+    }
+  } catch (err) {
+    playErrorBeep();
+    console.error('[ADMIN] Password verify error:', err.message);
+    input.value = '';
+    input.focus();
+    return;
+  }
+
+  adminPassword = password;
+  console.log('[ADMIN] Admin login successful.');
+  showAdminPanel();
+}
+
+function cancelAdminPassword() {
+  showScreen('clock');
+}
+
+// =============================================================================
+// Admin mode — main panel
+// =============================================================================
+function showAdminPanel() {
+  showAdminView('menu');
+  showScreen('admin');
+  console.log('[ADMIN] Admin panel open.');
+}
+
+function exitAdmin() {
+  adminAddUserMode = false;
+  adminPassword    = null;
+  console.log('[ADMIN] Admin session ended.');
+  showScreen('clock');
+}
+
+function showAdminView(viewName) {
+  ['menu', 'adduser', 'deluser', 'logs'].forEach(v => {
+    const el = document.getElementById('admin-view-' + v);
+    if (el) el.style.display = v === viewName ? '' : 'none';
+  });
+}
+
+// =============================================================================
+// Admin — Add user flow
+// =============================================================================
+function startAdminAddUser() {
+  showAdminView('adduser');
+  adminAddUserMode = true;
+  document.getElementById('admin-adduser-status').textContent =
+    'PRISLONI KARTO ZA DODAJANJE...';
+  console.log('[ADMIN] Waiting for NFC card to add...');
+}
+
+function cancelAdminAddUser() {
+  adminAddUserMode = false;
+  showAdminView('menu');
+}
+
+async function handleAdminAddUserScan(normId) {
+  // Check if already registered
+  let existingUser;
+  try {
+    const r = await apiFetch('GET', '/api/user/' + encodeURIComponent(normId));
+    existingUser = r.found ? r.user : null;
+  } catch (err) {
+    console.error('[ADMIN] Error checking user:', err.message);
+    showAdminStatus('Napaka strežnika.', 'red');
+    showAdminView('menu');
+    return;
+  }
+
+  if (existingUser) {
+    console.log('[ADMIN] Card already registered:', existingUser.name);
+    showAdminStatus('Kartica že registrirana: ' + existingUser.name, 'red');
+    showAdminView('menu');
+    return;
+  }
+
+  // Unknown card — open name entry in admin context
+  pendingNfcId = normId;
+  document.getElementById('name-entry-title').textContent =
+    'Nova kartica. Vpiši ime:';
+  const input = document.getElementById('name-entry-input');
+  input.value = '';
+  showScreen('name-entry');
+  // Override submit to return to admin panel
+  setTimeout(() => input.focus(), 100);
+}
+
+// =============================================================================
+// Admin — Delete user view
+// =============================================================================
+async function showAdminDeleteUsers() {
+  showAdminView('deluser');
+  const listEl = document.getElementById('admin-deluser-list');
+  listEl.innerHTML = '<div style="color:var(--dim);letter-spacing:.15em;font-size:.8rem">Nalaganje...</div>';
+
+  let users;
+  try {
+    const data = await apiFetch('GET', '/api/users', undefined,
+      { 'X-Admin-Password': adminPassword });
+    users = data.users || [];
+  } catch (err) {
+    console.error('[ADMIN] Failed to load users:', err.message);
+    listEl.innerHTML = '<div style="color:var(--red)">Napaka pri nalaganju.</div>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  if (!users.length) {
+    listEl.innerHTML = '<div style="color:var(--dim);letter-spacing:.12em;font-size:.8rem">Ni registriranih kartic.</div>';
+    return;
+  }
+
+  users.forEach(user => {
+    const row = document.createElement('div');
+    row.className = 'admin-user-row';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'admin-user-name';
+    nameEl.textContent = user.name;
+
+    const nfcEl = document.createElement('span');
+    nfcEl.className = 'admin-user-nfc';
+    nfcEl.textContent = user.nfc_id;
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'admin-user-delete';
+    delBtn.textContent = 'IZBRIŠI';
+    delBtn.addEventListener('click', () => confirmDeleteUser(user, row));
+
+    row.appendChild(nameEl);
+    row.appendChild(nfcEl);
+    row.appendChild(delBtn);
+    listEl.appendChild(row);
+  });
+}
+
+async function confirmDeleteUser(user, rowEl) {
+  if (!confirm('Izbriši ' + user.name + ' (' + user.nfc_id + ')?')) return;
+
+  try {
+    await apiFetch('DELETE', '/api/user/' + encodeURIComponent(user.nfc_id),
+      undefined, { 'X-Admin-Password': adminPassword });
+    rowEl.remove();
+    showAdminStatus(user.name + ' izbrisan.', 'green');
+    console.log('[ADMIN] Deleted user:', user.name);
+  } catch (err) {
+    console.error('[ADMIN] Delete failed:', err.message);
+    showAdminStatus('Napaka pri brisanju.', 'red');
+  }
+}
+
+// =============================================================================
+// Admin — Logs view
+// =============================================================================
+async function showAdminLogs(page) {
+  showAdminView('logs');
+  adminLogsPage = page || 1;
+  const tableEl = document.getElementById('admin-logs-table');
+  tableEl.innerHTML = '<tr><td style="color:var(--dim);letter-spacing:.12em">Nalaganje...</td></tr>';
+
+  let data;
+  try {
+    data = await apiFetch(
+      'GET',
+      '/api/sessions?page=' + adminLogsPage + '&per=' + ADMIN_LOGS_PER_PAGE,
+      undefined,
+      { 'X-Admin-Password': adminPassword }
+    );
+  } catch (err) {
+    console.error('[ADMIN] Failed to load sessions:', err.message);
+    tableEl.innerHTML = '<tr><td style="color:var(--red)">Napaka.</td></tr>';
+    return;
+  }
+
+  adminLogsTotal = data.total || 0;
+  const totalPages = Math.max(1, Math.ceil(adminLogsTotal / ADMIN_LOGS_PER_PAGE));
+
+  // Header
+  tableEl.innerHTML = '';
+  const thead = tableEl.createTHead();
+  const hrow  = thead.insertRow();
+  ['#', 'Ime', 'Datum', 'Vstop', 'Izstop', 'Min', 'Aktivnost'].forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    hrow.appendChild(th);
+  });
+
+  const tbody = tableEl.createTBody();
+  (data.sessions || []).forEach(s => {
+    const tr = tbody.insertRow();
+    const logoutTime = s.logout_time ? new Date(s.logout_time) : null;
+    const loginTime  = new Date(s.login_time);
+    const fmt = d => String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    [
+      s.id,
+      s.name,
+      s.date,
+      fmt(loginTime),
+      logoutTime ? fmt(logoutTime) : '—',
+      s.duration_sec ? Math.round(s.duration_sec / 60) : '—',
+      s.activity || '—',
+    ].forEach(val => {
+      const td = tr.insertCell();
+      td.textContent = val;
+    });
+  });
+
+  // Navigation
+  document.getElementById('admin-logs-page').textContent =
+    adminLogsPage + ' / ' + totalPages;
+  const prevBtn = document.getElementById('admin-logs-prev');
+  const nextBtn = document.getElementById('admin-logs-next');
+  prevBtn.disabled = adminLogsPage <= 1;
+  nextBtn.disabled = adminLogsPage >= totalPages;
+}
+
+// =============================================================================
+// Admin — Export CSV
+// =============================================================================
+async function exportAdminCSV() {
+  try {
+    const res = await fetch('/api/sessions/export', {
+      method: 'POST',
+      headers: {
+        'Content-Type':    'application/json',
+        'X-Admin-Password': adminPassword,
+      },
+      body: JSON.stringify({ adminPassword }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'fablab-sessions.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    showAdminStatus('CSV izvožen.', 'green');
+    console.log('[ADMIN] CSV export complete.');
+  } catch (err) {
+    console.error('[ADMIN] CSV export failed:', err.message);
+    showAdminStatus('Napaka pri izvozu.', 'red');
+  }
+}
+
+// =============================================================================
 // Initialisation
 // =============================================================================
 window.addEventListener('load', async () => {
@@ -647,6 +1035,47 @@ window.addEventListener('load', async () => {
     if (e.key === 'Escape') cancelNameEntry();
   });
 
+  // Wire up admin password screen
+  document.getElementById('admin-pass-submit').addEventListener('click', submitAdminPassword);
+  document.getElementById('admin-pass-cancel').addEventListener('click', cancelAdminPassword);
+  document.getElementById('admin-pass-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter')  submitAdminPassword();
+    if (e.key === 'Escape') cancelAdminPassword();
+  });
+
+  // Wire up admin panel
+  document.getElementById('admin-exit').addEventListener('click', exitAdmin);
+  document.getElementById('admin-btn-adduser').addEventListener('click', startAdminAddUser);
+  document.getElementById('admin-btn-deluser').addEventListener('click', showAdminDeleteUsers);
+  document.getElementById('admin-btn-logs').addEventListener('click', () => showAdminLogs(1));
+  document.getElementById('admin-btn-export').addEventListener('click', exportAdminCSV);
+  document.getElementById('admin-adduser-cancel').addEventListener('click', cancelAdminAddUser);
+  document.getElementById('admin-deluser-back').addEventListener('click', () => showAdminView('menu'));
+  document.getElementById('admin-logs-back').addEventListener('click', () => showAdminView('menu'));
+  document.getElementById('admin-logs-prev').addEventListener('click', () => showAdminLogs(adminLogsPage - 1));
+  document.getElementById('admin-logs-next').addEventListener('click', () => showAdminLogs(adminLogsPage + 1));
+
+  // Global keyboard shortcut: press 'A' on clock screen to open admin
+  document.addEventListener('keydown', e => {
+    const activeScreen = document.querySelector('.screen.active');
+    if (!activeScreen) return;
+    const screenId = activeScreen.id;
+
+    if (e.key === 'a' || e.key === 'A') {
+      // Only trigger from clock screen and not when typing in inputs
+      if (screenId === 'screen-clock' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        console.log('[ADMIN] Admin key pressed — showing password screen.');
+        showAdminPasswordScreen();
+      }
+    }
+    if (e.key === 'Escape') {
+      if (screenId === 'screen-admin' || screenId === 'screen-admin-password') {
+        exitAdmin();
+      }
+    }
+  });
+
   setInterval(updateClock, 1000);
   updateClock();
 
@@ -654,5 +1083,6 @@ window.addEventListener('load', async () => {
   startButton.addEventListener('click', () => {
     showScreen('intro');
     runIntro();
+    refreshLogPanel();
   });
 });
