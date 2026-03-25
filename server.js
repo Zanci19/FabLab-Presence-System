@@ -63,6 +63,16 @@ function purgeOldSessions() {
   }
 }
 
+// Seed test users so the simulation panel works out of the box
+db.exec(`
+  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
+  VALUES ('NFC001', 'Ana',  datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
+  VALUES ('NFC002', 'Bor',  datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
+  VALUES ('NFC003', 'Cene', datetime('now'), NULL, 0);
+`);
+
 purgeOldSessions();
 // Run purge once a day (86400000 ms)
 setInterval(purgeOldSessions, 86_400_000);
