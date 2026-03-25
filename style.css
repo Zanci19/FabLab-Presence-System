@@ -82,6 +82,10 @@ body {
   display: flex;
 }
 
+.screen * {
+  transition: color 0.35s ease, text-shadow 0.35s ease, opacity 0.35s ease;
+}
+
 .bg-lines {
   position: fixed;
   inset: 0;
@@ -91,6 +95,28 @@ body {
   opacity: 0.06;
   pointer-events: none;
   z-index: 1;
+}
+
+/* =============================================================================
+   START SCREEN
+   ============================================================================= */
+#start-button {
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  background: #000;
+  color: var(--white);
+  font-size: clamp(2rem, 8vw, 5rem);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 8px rgba(224,224,224,0.45),
+    0 0 24px rgba(224,224,224,0.18);
+  cursor: pointer;
+}
+
+#start-button:focus {
+  outline: none;
 }
 
 /* =============================================================================
@@ -155,7 +181,13 @@ body {
   text-transform: uppercase;
   text-align: center;
   text-shadow: 0 0 8px rgba(224,224,224,0.3);
-  transition: color 0.2s ease, text-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+#screen-clock.success-state #clock-display,
+#screen-clock.success-state #clock-date,
+#screen-clock.success-state #clock-helper {
+  color: var(--green);
+  text-shadow: 0 0 14px rgba(0,255,65,0.45);
 }
 
 #screen-clock.error-state #clock-display,
@@ -163,7 +195,6 @@ body {
 #screen-clock.error-state #clock-helper {
   color: var(--red);
   text-shadow: 0 0 14px rgba(255,34,34,0.45);
-  animation: red-fade 2s ease;
 }
 
 /* =============================================================================
