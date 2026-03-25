@@ -1,0 +1,342 @@
+// =============================================================================
+// FabLab Management System — script.js
+// =============================================================================
+
+// --- Test data (replace with SQLite reads in final product) ---
+const TEST_USERS = [
+  { id: 'NFC001', name: 'Ana' },
+  { id: 'NFC002', name: 'Bor' },
+  { id: 'NFC003', name: 'Cene' },
+];
+
+const ACTIVITIES = [
+  '3D tiskanje',
+  'Programiranje',
+  'Modeliranje',
+  'Zabušavanje',
+  'Učenje',
+  'Maintenance',
+  'Drugo',
+];
+
+// --- In-memory session store (key: "userId-YYYY-MM-DD") ---
+// Will be replaced with SQLite in final product
+const sessions = {};
+
+// --- App state ---
+let currentUser = null;
+
+// =============================================================================
+// Audio
+// =============================================================================
+function playSound(id) {
+  const el = document.getElementById('audio-' + id);
+  if (!el) {
+    console.warn('[AUDIO] Element not found for id:', id);
+    return;
+  }
+  el.currentTime = 0;
+  el.play().catch(err =>
+    console.warn('[AUDIO] Could not play "' + id + '":', err.message)
+  );
+  console.log('[AUDIO] Playing:', id);
+}
+
+// =============================================================================
+// Screen management
+// =============================================================================
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + screenId);
+  if (el) {
+    el.classList.add('active');
+  } else {
+    console.error('[SCREEN] Unknown screen:', screenId);
+  }
+  console.log('[SCREEN] Active screen:', screenId);
+}
+
+// =============================================================================
+// NFC feedback overlay
+// =============================================================================
+function showNfcFeedback(success, callback, durationMs = 850) {
+  const fb = document.getElementById('nfc-feedback');
+  fb.textContent = success ? '[ NFC OK ]' : '[ NFC NAPAKA ]';
+  fb.className = success ? 'success' : 'fail';
+  console.log('[NFC FEEDBACK]', success ? 'SUCCESS' : 'FAIL');
+
+  setTimeout(() => {
+    fb.className = '';
+    if (callback) callback();
+  }, durationMs);
+}
+
+// =============================================================================
+// Date / time helpers
+// =============================================================================
+function getTodayKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function formatTime(date) {
+  return (
+    String(date.getHours()).padStart(2, '0') + ':' +
+    String(date.getMinutes()).padStart(2, '0') + ':' +
+    String(date.getSeconds()).padStart(2, '0')
+  );
+}
+
+function formatDate(date) {
+  const DAYS = [
+    'Nedelja', 'Ponedeljek', 'Torek', 'Sreda',
+    'Četrtek', 'Petek', 'Sobota',
+  ];
+  const MONTHS = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun',
+    'Jul', 'Avg', 'Sep', 'Okt', 'Nov', 'Dec',
+  ];
+  return (
+    DAYS[date.getDay()] + ', ' +
+    date.getDate() + '. ' +
+    MONTHS[date.getMonth()] + ' ' +
+    date.getFullYear()
+  );
+}
+
+// =============================================================================
+// NFC read handler
+// =============================================================================
+function handleNfcRead(nfcId) {
+  console.log('[NFC] Card presented. Raw ID:', nfcId);
+
+  const user = TEST_USERS.find(u => u.id === nfcId);
+
+  if (!user) {
+    console.log('[NFC] Unknown card — not in database. ID:', nfcId);
+    showNfcFeedback(false);
+    return;
+  }
+
+  console.log('[NFC] Recognized user:', user.name, '(', nfcId, ')');
+
+  const today = getTodayKey();
+  const sessionKey = user.id + '-' + today;
+  const session = sessions[sessionKey];
+
+  if (session && session.loginTime && !session.logoutTime) {
+    // Session open today → log out
+    showNfcFeedback(true, () => doLogout(user, sessionKey));
+  } else {
+    // No open session today → log in
+    showNfcFeedback(true, () => doLogin(user, sessionKey));
+  }
+}
+
+// =============================================================================
+// Login
+// =============================================================================
+function doLogin(user, sessionKey) {
+  const loginTime = new Date();
+  console.log('[LOGIN] User:', user.name, '| Time:', formatTime(loginTime), '| Date:', getTodayKey());
+
+  // Pre-create session with login time; activity will be filled on selection
+  sessions[sessionKey] = {
+    userId: user.id,
+    name: user.name,
+    date: getTodayKey(),
+    loginTime: loginTime,
+    activity: null,
+    logoutTime: null,
+  };
+  console.log('[SESSION CREATED]', JSON.stringify(sessions[sessionKey], null, 2));
+
+  playSound('login');
+  currentUser = user;
+  showGreeting(user);
+}
+
+// =============================================================================
+// Logout
+// =============================================================================
+function doLogout(user, sessionKey) {
+  if (!sessions[sessionKey]) {
+    console.warn('[LOGOUT] No session found for key:', sessionKey, '— aborting logout');
+    showScreen('clock');
+    currentUser = null;
+    return;
+  }
+
+  const logoutTime = new Date();
+  sessions[sessionKey].logoutTime = logoutTime;
+
+  console.log('[LOGOUT] User:', user.name, '| Time:', formatTime(logoutTime), '| Date:', getTodayKey());
+  console.log('[SESSION COMPLETE]', JSON.stringify(sessions[sessionKey], null, 2));
+
+  playSound('logout');
+  currentUser = null;
+  showScreen('clock');
+}
+
+// =============================================================================
+// Greeting + activity selection screen
+// =============================================================================
+function showGreeting(user) {
+  console.log('[GREETING] Showing greeting for:', user.name);
+  document.getElementById('greeting-text').innerHTML =
+    'Živjo ' + user.name + '.<br>Kaj delaš danes?';
+  showScreen('greeting');
+}
+
+function selectActivity(activity) {
+  const today = getTodayKey();
+  const sessionKey = currentUser.id + '-' + today;
+
+  sessions[sessionKey].activity = activity;
+
+  console.log('[ACTIVITY SELECTED] User:', currentUser.name,
+    '| Activity:', activity,
+    '| Date:', today,
+    '| Login time:', formatTime(sessions[sessionKey].loginTime));
+  console.log('[SESSION UPDATED]', JSON.stringify(sessions[sessionKey], null, 2));
+
+  playSound('topic-select');
+  showScreen('clock');
+  currentUser = null;
+}
+
+// =============================================================================
+// Clock
+// =============================================================================
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('clock-display').textContent = h + ':' + m + ':' + s;
+  document.getElementById('clock-date').textContent = formatDate(now);
+}
+
+// =============================================================================
+// Intro animation
+// =============================================================================
+function runIntro() {
+  console.log('[INTRO] Starting intro animation');
+  playSound('intro');
+
+  const lines = ['FABLAB', 'MANAGEMENT', 'SYSTEM'];
+  const container = document.getElementById('intro-text');
+  container.innerHTML = '';
+
+  let lineIdx = 0;
+  let charIdx = 0;
+  let currentLineEl = null;
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor-blink';
+  cursor.textContent = '█';
+
+  function typeNext() {
+    if (lineIdx >= lines.length) {
+      // All lines typed — wait, then show clock
+      setTimeout(() => {
+        console.log('[INTRO] Complete — transitioning to clock screen');
+        showScreen('clock');
+      }, 1600);
+      return;
+    }
+
+    const line = lines[lineIdx];
+
+    if (charIdx === 0) {
+      // Start a new line, move cursor into it
+      currentLineEl = document.createElement('div');
+      currentLineEl.className = 'intro-line';
+      container.appendChild(currentLineEl);
+      currentLineEl.appendChild(cursor); // appendChild moves cursor if already in DOM
+    }
+
+    if (charIdx < line.length) {
+      const textNode = document.createTextNode(line[charIdx]);
+      currentLineEl.insertBefore(textNode, cursor);
+      charIdx++;
+      setTimeout(typeNext, 55 + Math.random() * 65);
+    } else {
+      // Line complete — move to next
+      lineIdx++;
+      charIdx = 0;
+      setTimeout(typeNext, 300);
+    }
+  }
+
+  setTimeout(typeNext, 550);
+}
+
+// =============================================================================
+// Build activity grid buttons
+// =============================================================================
+function buildActivityGrid() {
+  const grid = document.getElementById('activity-grid');
+  ACTIVITIES.forEach(activity => {
+    const btn = document.createElement('button');
+    btn.className = 'activity-btn';
+    btn.textContent = activity;
+    btn.addEventListener('click', () => {
+      console.log('[UI] Activity button pressed:', activity);
+      selectActivity(activity);
+    });
+    grid.appendChild(btn);
+  });
+  console.log('[INIT] Activity grid built with', ACTIVITIES.length, 'options');
+}
+
+// =============================================================================
+// Build simulation panel (REMOVE IN FINAL PRODUCT)
+// =============================================================================
+function buildSimPanel() {
+  const panel = document.getElementById('sim-panel');
+
+  TEST_USERS.forEach(user => {
+    const btn = document.createElement('button');
+    btn.className = 'sim-btn';
+    btn.textContent = 'NFC: ' + user.name;
+    btn.addEventListener('click', () => {
+      console.log('[SIM] Simulating NFC press — user:', user.name, '(', user.id, ')');
+      handleNfcRead(user.id);
+    });
+    panel.appendChild(btn);
+  });
+
+  // Button that simulates an unrecognised card
+  const failBtn = document.createElement('button');
+  failBtn.className = 'sim-btn sim-btn-fail';
+  failBtn.textContent = 'NFC: ???';
+  failBtn.addEventListener('click', () => {
+    console.log('[SIM] Simulating unknown NFC card (ID: UNKNOWN999)');
+    handleNfcRead('UNKNOWN999');
+  });
+  panel.appendChild(failBtn);
+
+  console.log('[INIT] Simulation panel built (' + TEST_USERS.length + ' users + 1 fail button)');
+}
+
+// =============================================================================
+// Initialisation
+// =============================================================================
+window.addEventListener('load', () => {
+  console.log('=== FabLab Management System starting ===');
+  console.log('[INIT] Test users:', JSON.stringify(TEST_USERS, null, 2));
+  console.log('[INIT] Activities:', ACTIVITIES.join(', '));
+
+  buildActivityGrid();
+  buildSimPanel();
+
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  showScreen('intro');
+  runIntro();
+});
