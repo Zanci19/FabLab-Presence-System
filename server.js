@@ -286,8 +286,7 @@ function requireAdmin(req, res, next) {
   const adminPassword = settings.adminPassword || 'admin';
   const provided =
     req.headers['x-admin-password'] ||
-    (req.body && req.body.adminPassword) ||
-    (req.query && req.query.adminPassword);
+    (req.body && req.body.adminPassword);
   if (!provided || provided !== adminPassword) {
     return res.status(401).json({ error: 'Invalid admin password.' });
   }
