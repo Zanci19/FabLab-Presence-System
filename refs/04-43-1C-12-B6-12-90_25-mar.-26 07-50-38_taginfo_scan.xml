@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scan>
+	<version>6.2.0</version>
+	<date>2026-03-25 07:50:32</date>
+	<title>NXP Semiconductors 
+
+NOTE: Signature verification does not protect on chip-individual level. The product offers an additional symmetric authentication to validate the originality towards NXP backend systems. To enable AES-based symmetric authentication, please tick the box “Originality Check” within the TagInfo settings, and make sure internet connection is active.  MIFARE DESFire EV2 (MF3DH22) tag</title>
+	<uid nxp="true">04:43:1C:12:B6:12:90</uid>
+	<hasndef>false</hasndef>
+	<section>
+		<subsection title="IC Manufacturer">
+			<block type="text">
+	<content>NXP Semiconductors 
+
+NOTE: Signature verification does not protect on chip-individual level. The product offers an additional symmetric authentication to validate the originality towards NXP backend systems. To enable AES-based symmetric authentication, please tick the box “Originality Check” within the TagInfo settings, and make sure internet connection is active. </content>
+</block>
+		</subsection>
+		<subsection title="IC Type">
+			<block type="text">
+	<content>MIFARE DESFire EV2 (MF3DH22)</content>
+</block>
+		</subsection>
+		<subsection title="DESFire Applications">
+			<block type="text">
+	<content>1 unknown application<hexoutput>:
+‣ Unknown application 0x4791DA</hexoutput></content>
+</block>
+		</subsection>
+	</section>
+	<section>
+		<subsection title="No NDEF Data Storage Populated">
+			<block type="text">
+	<content></content>
+</block>
+		</subsection>
+	</section>
+	<section>
+		<subsection title="Memory information">
+			<block type="text">
+	<content>Size: 2 kB
+Available: 1.9 kB<hexoutput> (1920 bytes)</hexoutput></content>
+</block>
+		</subsection>
+		<subsection title="IC Information">
+			<block type="text">
+	<content>Capacitance: 70 pF</content>
+</block>
+		</subsection>
+		<subsection title="Version information">
+			<block type="text">
+	<content>Vendor ID: NXP Semiconductors<hexoutput> (0x04)</hexoutput>
+Hardware info:
+‣ Type/subtype: 0x01/0x02
+‣  Major Version: 0x12
+‣  Minor Version: 0x00
+‣ Storage size: 2048 bytes<hexoutput> (0x16)</hexoutput>
+‣ Protocol: ISO/IEC 14443-4<hexoutput> (0x05)</hexoutput>
+Software info:
+‣ Type/subtype: 0x01/0x01
+‣  Major Version: 0x02
+‣  Minor Version: 0x01
+‣ Storage size: 2048 bytes<hexoutput> (0x16)</hexoutput>
+‣ Protocol: ISO/IEC 14443-4<hexoutput> (0x05)</hexoutput>
+Production date: week 28, 2022<hexoutput> (0x2822)</hexoutput></content>
+</block>
+		</subsection>
+		<subsection title="Originality Check (asymmetric)">
+			<block type="text">
+	<content>Signature verified with NXP public key</content>
+</block>
+		</subsection>
+		<subsection title="TagInfo Version">
+			<block type="text">
+	<content>Version :6.2.0</content>
+</block>
+		</subsection>
+		<subsection title="Device Info">
+			<block type="text">
+	<content>Device Model :samsung ( SM-A336B )
+Android OS Version :16</content>
+</block>
+		</subsection>
+	</section>
+	<section>
+		<subsection title="Technologies Supported">
+			<block type="text">
+	<content>ISO/IEC 7816-4 compatible
+Native DESFire APDU framing
+ISO/IEC 14443-4 (Type A) compatible
+ISO/IEC 14443-3 (Type A) compatible
+ISO/IEC 14443-2 (Type A) compatible</content>
+</block>
+		</subsection>
+		<subsection title="Android Technology Information">
+			<block type="text">
+	<content>Tag description:
+‣ TAG: Tech [android.nfc.tech.IsoDep, android.nfc.tech.NfcA, android.nfc.tech.NdefFormatable]
+‣ Maximum transceive length: 65279 bytes
+‣ Default maximum transceive time-out: 618 ms
+‣ Extended length APDUs supported
+‣ Maximum transceive length: 253 bytes
+‣ Default maximum transceive time-out: 618 ms
+<hexoutput>MIFARE Classic support present in Android</hexoutput></content>
+</block>
+		</subsection>
+		<subsection title="Detailed Protocol Information">
+			<block type="text">
+	<content>ID: 04:43:1C:12:B6:12:90
+ATQA: 0x4403
+SAK: 0x20
+ATS: 0x067577810280
+‣ Max. accepted frame size: 64 bytes (FSCI: 5)
+‣ Supported receive rates:
+	• 106, 212, 424, 848 kbit/s (DR: 1, 2, 4, 8)
+‣ Supported send rates:
+	• 106, 212, 424, 848 kbit/s (DS: 1, 2, 4, 8)
+‣ Different send and receive rates supported
+‣ SFGT: 604.1 µs  (SFGI: 1)
+‣ FWT: 77.33 ms  (FWI: 8)
+‣ NAD not supported
+‣ CID supported
+‣ Historical bytes: 0x80 |·|</content>
+</block>
+		</subsection>
+		<subsection title="Memory Content">
+			<block type="text">
+	<content>
+Application ID 0x000000 (PICC)
+‣ Key configuration:<hexoutput> (0x0F81)</hexoutput>
+  • 1 AES key
+  • Key type of active keyset: AES
+  • Master key changeable
+  • Master key required for:
+    ◦ directory list access: no
+    ◦ create/delete files: no
+  • Configuration changeable
+  • Master key version: 0</content>
+</block>
+<block type="text">
+	<content>
+Application ID 0xDA9147
+‣ Key configuration:<hexoutput> (0x0B82)</hexoutput>
+  • 2 AES keys
+  • Max no. of keys: 2
+  • Key type of active keyset: AES
+  • Master key changeable
+  • Master key required for:
+    ◦ directory list access: no
+    ◦ create/delete files: yes
+  • Configuration changeable
+  • Master key required for changing a key
+  • Key versions:
+    ◦ Master key: 0
+    ◦ Key #1: 0</content>
+</block>
+<block type="text">
+	<content>
+  • File ID 0x00: Standard data, 48 bytes
+    ◦ Communication: encrypted
+    ◦ Read key: key #1
+    ◦ Write key: key #1
+    ◦ Read/Write key: key #1
+    ◦ Change key: key #1</content>
+</block>
+<block type="text">
+	<content>    ◦ (No access)</content>
+</block>
+<block type="text">
+	<content>
+  • File ID 0x01: Standard data, 240 bytes
+    ◦ Communication: encrypted
+    ◦ Read key: master key<hexoutput> (0x00)</hexoutput>
+    ◦ Write key: master key<hexoutput> (0x00)</hexoutput>
+    ◦ Read/Write key: master key<hexoutput> (0x00)</hexoutput>
+    ◦ Change key: master key<hexoutput> (0x00)</hexoutput></content>
+</block>
+<block type="text">
+	<content>    ◦ (No access)</content>
+</block>
+<block type="text">
+	<content>
+  • File ID 0x04: Standard data, 144 bytes
+    ◦ Communication: encrypted
+    ◦ Read key: master key<hexoutput> (0x00)</hexoutput>
+    ◦ Write key: master key<hexoutput> (0x00)</hexoutput>
+    ◦ Read/Write key: master key<hexoutput> (0x00)</hexoutput>
+    ◦ Change key: master key<hexoutput> (0x00)</hexoutput></content>
+</block>
+<block type="text">
+	<content>    ◦ (No access)</content>
+</block>
+		</subsection>
+	</section>
+</scan>
