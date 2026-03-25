@@ -26,6 +26,8 @@ const sessions = {};
 // --- App state ---
 let currentUser = null;
 let helperMessageTimeout = null;
+let nfcFlowInProgress = false;
+const DEFAULT_HELPER_TEXT = 'Prisloni ključ za vstop/izstop...';
 
 // =============================================================================
 // Audio
@@ -60,18 +62,6 @@ function showScreen(screenId) {
 // =============================================================================
 // NFC feedback overlay
 // =============================================================================
-function showNfcFeedback(success, message, callback, durationMs = 850) {
-  const fb = document.getElementById('nfc-feedback');
-  fb.textContent = message;
-  fb.className = success ? 'success' : 'fail';
-  console.log('[NFC FEEDBACK]', success ? 'SUCCESS' : 'FAIL');
-
-  setTimeout(() => {
-    fb.className = '';
-    if (callback) callback();
-  }, durationMs);
-}
-
 function randomChars(length = 16) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=';
   let output = '';
@@ -82,13 +72,12 @@ function randomChars(length = 16) {
 }
 
 function runNfcScramble(durationMs = 500, tickMs = 50) {
-  const fb = document.getElementById('nfc-feedback');
-  fb.className = 'scramble';
-  fb.textContent = randomChars(16);
+  const helper = document.getElementById('clock-helper');
+  helper.textContent = randomChars(16);
 
   return new Promise(resolve => {
     const interval = setInterval(() => {
-      fb.textContent = randomChars(16);
+      helper.textContent = randomChars(16);
     }, tickMs);
 
     setTimeout(() => {
@@ -104,9 +93,20 @@ function clearNfcFeedback() {
   fb.textContent = '';
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function setClockState(state = '') {
+  const clockScreen = document.getElementById('screen-clock');
+  clockScreen.classList.remove('success-state', 'error-state');
+  if (state) {
+    clockScreen.classList.add(state);
+  }
+}
+
 function setClockHelperMessage(message, color = 'white', durationMs = 0) {
   const helper = document.getElementById('clock-helper');
-  const clockScreen = document.getElementById('screen-clock');
 
   if (helperMessageTimeout) {
     clearTimeout(helperMessageTimeout);
@@ -114,7 +114,7 @@ function setClockHelperMessage(message, color = 'white', durationMs = 0) {
   }
 
   helper.textContent = message;
-  clockScreen.classList.remove('error-state');
+  setClockState('');
   helper.style.color = color === 'red' ? 'var(--red)' : 'var(--white)';
   helper.style.textShadow = color === 'red'
     ? '0 0 12px rgba(255,34,34,0.45)'
@@ -122,7 +122,7 @@ function setClockHelperMessage(message, color = 'white', durationMs = 0) {
 
   if (durationMs > 0) {
     helperMessageTimeout = setTimeout(() => {
-      setClockHelperMessage('Prisloni ključ za vstop/izstop...');
+      setClockHelperMessage(DEFAULT_HELPER_TEXT);
     }, durationMs);
   }
 }
@@ -167,42 +167,50 @@ function formatDate(date) {
 // NFC read handler
 // =============================================================================
 async function handleNfcRead(nfcId) {
+  if (nfcFlowInProgress) {
+    console.warn('[NFC] Ignoring read while previous flow is active.');
+    return;
+  }
+  nfcFlowInProgress = true;
+
   console.log('[NFC] Card presented. Raw ID:', nfcId);
 
   const user = TEST_USERS.find(u => u.id === nfcId);
-  const clockScreen = document.getElementById('screen-clock');
+  setClockState('');
+  clearNfcFeedback();
 
-  await runNfcScramble(500, 50);
+  try {
+    await runNfcScramble(500, 50);
 
-  if (!user) {
-    console.log('[NFC] Unknown card — not in database. ID:', nfcId);
-    clockScreen.classList.add('error-state');
-    showNfcFeedback(false, 'Prisloni ponovno...', () => {
-      clockScreen.classList.remove('error-state');
-      clearNfcFeedback();
-      setClockHelperMessage('Prisloni ključ za vstop/izstop...');
-    }, 2000);
-    return;
-  }
+    if (!user) {
+      console.log('[NFC] Unknown card — not in database. ID:', nfcId);
+      setClockHelperMessage('NFC ni uspel. Poskusi znova.');
+      setClockState('error-state');
+      await sleep(1600);
+      setClockState('');
+      setClockHelperMessage(DEFAULT_HELPER_TEXT);
+      return;
+    }
 
-  console.log('[NFC] Recognized user:', user.name, '(', nfcId, ')');
+    console.log('[NFC] Recognized user:', user.name, '(', nfcId, ')');
 
-  const today = getTodayKey();
-  const sessionKey = user.id + '-' + today;
-  const session = sessions[sessionKey];
+    setClockHelperMessage(user.name);
+    setClockState('success-state');
+    playSound('login');
+    await sleep(900);
+    setClockState('');
 
-  if (session && session.loginTime && !session.logoutTime) {
-    // Session open today → log out
-    showNfcFeedback(true, user.name, () => {
-      clearNfcFeedback();
+    const today = getTodayKey();
+    const sessionKey = user.id + '-' + today;
+    const session = sessions[sessionKey];
+
+    if (session && session.loginTime && !session.logoutTime) {
       doLogout(user, sessionKey);
-    }, 850);
-  } else {
-    // No open session today → log in
-    showNfcFeedback(true, user.name, () => {
-      clearNfcFeedback();
+    } else {
       doLogin(user, sessionKey);
-    }, 850);
+    }
+  } finally {
+    nfcFlowInProgress = false;
   }
 }
 
@@ -224,8 +232,8 @@ function doLogin(user, sessionKey) {
   };
   console.log('[SESSION CREATED]', JSON.stringify(sessions[sessionKey], null, 2));
 
-  playSound('login');
   currentUser = user;
+  setClockHelperMessage(DEFAULT_HELPER_TEXT);
   showGreeting(user);
 }
 
@@ -257,6 +265,8 @@ function doLogout(user, sessionKey) {
 // =============================================================================
 function showGreeting(user) {
   console.log('[GREETING] Showing greeting for:', user.name);
+  setClockState('');
+  setClockHelperMessage(DEFAULT_HELPER_TEXT);
   document.getElementById('greeting-text').innerHTML =
     'Živjo ' + user.name + '.<br>Kaj delaš danes?';
   showScreen('greeting');
@@ -409,6 +419,9 @@ window.addEventListener('load', () => {
   setInterval(updateClock, 1000);
   updateClock();
 
-  showScreen('intro');
-  runIntro();
+  const startButton = document.getElementById('start-button');
+  startButton.addEventListener('click', () => {
+    showScreen('intro');
+    runIntro();
+  });
 });
