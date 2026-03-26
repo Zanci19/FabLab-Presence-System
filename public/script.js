@@ -4,9 +4,9 @@
 
 // --- Test data (kept for simulation panel) ---
 const TEST_USERS = [
-  { id: 'NFC001', name: 'Ana' },
-  { id: 'NFC002', name: 'Bor' },
-  { id: 'NFC003', name: 'Cene' },
+  { id: 'NFC001', name: 'Ana', surname: 'Novak', gender: 'female' },
+  { id: 'NFC002', name: 'Bor', surname: 'Kranjc', gender: 'male' },
+  { id: 'NFC003', name: 'Cene', surname: 'Zupan', gender: 'male' },
 ];
 
 // Real NFC tag UIDs from physical cards (UID normalised: no colons, uppercase)
@@ -26,7 +26,7 @@ const ACTIVITIES = [
 ];
 
 // --- App state ---
-let currentUser      = null;   // { id, name }
+let currentUser      = null;   // { id, name, gender }
 let activeSessionId  = null;   // DB session id of the current open session
 let pendingNfcId     = null;   // NFC ID waiting for name entry
 let helperMessageTimeout  = null;
@@ -37,8 +37,16 @@ let adminLogsPage    = 1;
 let adminLogsTotal   = 0;
 const ADMIN_LOGS_PER_PAGE = 20;
 const DEFAULT_HELPER_TEXT = 'Prisloni ključ za vstop/izstop...';
-const DEFAULT_CONFIG = Object.freeze({ animationsEnabled: true });
+const DEFAULT_CONFIG = Object.freeze({
+  animationsEnabled: true,
+  logPanelEnabled: true,
+});
 let appConfig = { ...DEFAULT_CONFIG };
+let nameEntryFlow = {
+  mode: 'idle', // idle | confirm-create | collect-name | collect-gender
+  context: 'user', // user | admin
+  fullName: '',
+};
 
 // =============================================================================
 // Audio
@@ -105,6 +113,16 @@ function playErrorBeep() {
 // Screen management
 // =============================================================================
 function showScreen(screenId) {
+  const currentlyActive = document.querySelector('.screen.active');
+  const currentScreenId = currentlyActive?.id || '';
+  const targetScreenDomId = 'screen-' + screenId;
+  const isSameScreen = currentScreenId === targetScreenDomId;
+
+  if (isSameScreen) {
+    console.log('[SCREEN] Active screen unchanged:', screenId);
+    return;
+  }
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + screenId);
   if (el) {
@@ -128,21 +146,29 @@ function applyAnimationMode() {
   console.log('[CONFIG] Animations enabled:', appConfig.animationsEnabled);
 }
 
-async function loadConfig() {
-  const coerceAnimationsEnabled = value => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (normalized === 'false') return false;
-      if (normalized === 'true') return true;
-    }
-    return DEFAULT_CONFIG.animationsEnabled;
-  };
+function applyLogPanelMode() {
+  const logPanel = document.getElementById('clock-log-panel');
+  if (!logPanel) return;
+  logPanel.style.display = appConfig.logPanelEnabled ? 'flex' : 'none';
+  console.log('[CONFIG] Log panel enabled:', appConfig.logPanelEnabled);
+}
 
+function coerceBoolean(value, fallback) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'false') return false;
+    if (normalized === 'true') return true;
+  }
+  return fallback;
+}
+
+async function loadConfig() {
   const parseConfig = data => ({
     ...DEFAULT_CONFIG,
     ...data,
-    animationsEnabled: coerceAnimationsEnabled(data?.animationsEnabled),
+    animationsEnabled: coerceBoolean(data?.animationsEnabled, DEFAULT_CONFIG.animationsEnabled),
+    logPanelEnabled: coerceBoolean(data?.logPanelEnabled, DEFAULT_CONFIG.logPanelEnabled),
   });
 
   const configUrls = ['/api/settings', './settings.json'];
@@ -177,6 +203,7 @@ async function loadConfig() {
   }
 
   applyAnimationMode();
+  applyLogPanelMode();
 }
 
 function randomChars(length = 16) {
@@ -214,8 +241,36 @@ function clearNfcFeedback() {
   fb.textContent = '';
 }
 
+function flashScanCrescendo(durationMs = 380) {
+  const el = document.getElementById('scan-crescendo');
+  if (!el) return;
+  el.classList.remove('scan-crescendo-active');
+  void el.offsetWidth;
+  el.classList.add('scan-crescendo-active');
+  setTimeout(() => {
+    el.classList.remove('scan-crescendo-active');
+  }, durationMs);
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isFemaleUser(user) {
+  return user?.gender === 'female';
+}
+
+function buildFullName(user) {
+  if (!user) return '';
+  if (user.surname) return (user.name + ' ' + user.surname).trim();
+  return String(user.name || '').trim();
+}
+
+function splitFullName(fullName) {
+  const parts = fullName.trim().replace(/\s+/g, ' ').split(' ');
+  const name = parts.shift() || '';
+  const surname = parts.join(' ').trim();
+  return { name, surname };
 }
 
 function setClockState(state = '') {
@@ -364,6 +419,13 @@ async function apiFetch(method, url, body, extraHeaders) {
 // NFC read handler
 // =============================================================================
 async function handleNfcRead(nfcId) {
+  const activeScreen = document.querySelector('.screen.active');
+  if (activeScreen?.id === 'screen-greeting') {
+    console.warn('[NFC] Scan ignored while activity picker is active.');
+    playErrorBeep();
+    return;
+  }
+
   // --- Admin "add user" mode: capture this scan ---
   if (adminAddUserMode) {
     adminAddUserMode = false;
@@ -384,6 +446,7 @@ async function handleNfcRead(nfcId) {
 
   setClockState('');
   clearNfcFeedback();
+  flashScanCrescendo();
 
   try {
     await runNfcScramble(500, 50);
@@ -394,6 +457,7 @@ async function handleNfcRead(nfcId) {
       userResult = await apiFetch('GET', '/api/user/' + encodeURIComponent(normId));
     } catch (err) {
       console.error('[NFC] API error during user lookup:', err.message);
+      playErrorBeep();
       setClockHelperMessage('Napaka strežnika. Poskusi znova.', 'red', 2500);
       setClockState('error-state');
       await sleep(1600);
@@ -402,15 +466,20 @@ async function handleNfcRead(nfcId) {
     }
 
     if (!userResult.found) {
-      // Unknown tag — play error beep, then prompt for name
-      console.log('[NFC] Unknown card. ID:', normId, '— prompting for name.');
+      // Unknown tag — prompt for account creation
+      console.log('[NFC] Unknown card. ID:', normId, '— prompting for account creation.');
       playErrorBeep();
       pendingNfcId = normId;
-      showNameEntry();
+      showUnknownUserPrompt();
       return;
     }
 
-    const user = { id: normId, name: userResult.user.name };
+    const user = {
+      id: normId,
+      name: userResult.user.name,
+      surname: userResult.user.surname || '',
+      gender: userResult.user.gender || 'male',
+    };
     console.log('[NFC] Recognised user:', user.name, '(', normId, ')');
 
     // Check for an active session today
@@ -419,13 +488,14 @@ async function handleNfcRead(nfcId) {
       activeResult = await apiFetch('GET', '/api/session/active/' + encodeURIComponent(normId));
     } catch (err) {
       console.error('[NFC] API error during session lookup:', err.message);
+      playErrorBeep();
       setClockHelperMessage('Napaka strežnika. Poskusi znova.', 'red', 2500);
       return;
     }
 
     const isLogoutFlow = activeResult.found;
 
-    setClockHelperMessage(user.name, isLogoutFlow ? 'orange' : 'white');
+    setClockHelperMessage(buildFullName(user), isLogoutFlow ? 'orange' : 'white');
     setClockState(isLogoutFlow ? 'logout-state' : 'success-state');
     playSound('login');
     await sleep(900);
@@ -446,12 +516,12 @@ async function handleNfcRead(nfcId) {
 // =============================================================================
 async function doLogin(user) {
   const loginTime = new Date();
-  console.log('[LOGIN] User:', user.name, '| Time:', formatTime(loginTime), '| Date:', getTodayKey());
+  console.log('[LOGIN] User:', buildFullName(user), '| Time:', formatTime(loginTime), '| Date:', getTodayKey());
 
   try {
     const result = await apiFetch('POST', '/api/session/login', {
       nfcId:     user.id,
-      name:      user.name,
+      name:      buildFullName(user),
       userAgent: navigator.userAgent,
     });
     activeSessionId = result.session.id;
@@ -484,7 +554,11 @@ async function doLogout(user, sessionId) {
   activeSessionId = null;
   playSound('logout');
   showScreen('clock');
-  setClockHelperMessage('Izpisan si. Nasvidenje!', 'white', 2500);
+  setClockHelperMessage(
+    isFemaleUser(user) ? 'Izpisana si. Nasvidenje!' : 'Izpisan si. Nasvidenje!',
+    'white',
+    2500
+  );
   refreshLogPanel();
 }
 
@@ -492,11 +566,11 @@ async function doLogout(user, sessionId) {
 // Greeting + activity selection screen
 // =============================================================================
 function showGreeting(user) {
-  console.log('[GREETING] Showing greeting for:', user.name);
+  console.log('[GREETING] Showing greeting for:', buildFullName(user));
   setClockState('');
   setClockHelperMessage(DEFAULT_HELPER_TEXT);
   document.getElementById('greeting-text').innerHTML =
-    'Živjo ' + user.name + '.<br>Kaj delaš danes?';
+    'Živjo ' + buildFullName(user) + '.<br>Kaj delaš danes?';
   showScreen('greeting');
 }
 
@@ -514,7 +588,11 @@ async function selectActivity(activity) {
 
   playSound('topic-select');
   showScreen('clock');
-  setClockHelperMessage('Vpisan si v FabLab.', 'white', 2500);
+  setClockHelperMessage(
+    isFemaleUser(currentUser) ? 'Vpisana si v FabLab.' : 'Vpisan si v FabLab.',
+    'white',
+    2500
+  );
   currentUser = null;
   activeSessionId = null;
 }
@@ -524,40 +602,84 @@ async function selectActivity(activity) {
 // =============================================================================
 function showNameEntry() {
   const input = document.getElementById('name-entry-input');
-  input.value = '';
+  const submitBtn = document.getElementById('name-entry-submit');
+  const cancelBtn = document.getElementById('name-entry-cancel');
+  const title = document.getElementById('name-entry-title');
+
+  if (nameEntryFlow.mode === 'confirm-create') {
+    title.innerHTML = 'ID ključa ni povezan z računom.<br>Ustvari račun';
+    input.style.display = 'none';
+    submitBtn.textContent = 'DA';
+    cancelBtn.textContent = 'NE';
+  } else if (nameEntryFlow.mode === 'collect-gender') {
+    title.textContent = 'Izberi spol';
+    input.style.display = 'none';
+    submitBtn.textContent = 'ŽENSKA';
+    cancelBtn.textContent = 'MOŠKI';
+  } else {
+    title.textContent = 'Vpiši ime in priimek';
+    input.style.display = '';
+    input.placeholder = 'Ime in priimek...';
+    submitBtn.textContent = 'POTRDI';
+    cancelBtn.textContent = 'PREKLIČI';
+  }
+
   showScreen('name-entry');
-  // Focus after screen transition
-  setTimeout(() => input.focus(), 100);
+  if (nameEntryFlow.mode === 'collect-name') {
+    input.value = '';
+    setTimeout(() => input.focus(), 100);
+  }
 }
 
 async function submitNameEntry() {
   const input = document.getElementById('name-entry-input');
-  const name  = input.value.trim();
-
-  if (!name) {
-    input.focus();
-    return;
-  }
-
   if (!pendingNfcId) {
     console.warn('[NAME ENTRY] No pending NFC ID — aborting.');
     showScreen('clock');
     return;
   }
 
-  // Restore default title for future uses
-  document.getElementById('name-entry-title').innerHTML =
-    'Neznan ključ.<br>Vpiši svoje ime:';
+  if (nameEntryFlow.mode === 'confirm-create') {
+    nameEntryFlow.mode = 'collect-name';
+    showNameEntry();
+    return;
+  }
 
-  console.log('[NAME ENTRY] Registering:', name, '(', pendingNfcId, ')');
+  if (nameEntryFlow.mode === 'collect-name') {
+    const fullName = input.value.trim().replace(/\s+/g, ' ');
+    if (!fullName || fullName.split(' ').length < 2) {
+      input.focus();
+      setClockHelperMessage('Vnesi ime in priimek.', 'orange', 1800);
+      return;
+    }
+    nameEntryFlow.fullName = fullName;
+    nameEntryFlow.mode = 'collect-gender';
+    showNameEntry();
+    return;
+  }
+
+  if (nameEntryFlow.mode === 'collect-gender') {
+    await registerPendingUser(nameEntryFlow.fullName, 'female');
+    return;
+  }
+
+  console.warn('[NAME ENTRY] Unexpected mode:', nameEntryFlow.mode);
+}
+
+async function registerPendingUser(fullName, gender) {
+  const nfcId = pendingNfcId;
+  const flowContext = nameEntryFlow.context;
+  const { name, surname } = splitFullName(fullName);
+  console.log('[NAME ENTRY] Registering:', fullName, '(' + nfcId + ')', '| gender:', gender);
 
   try {
-    await apiFetch('POST', '/api/user', { nfcId: pendingNfcId, name });
+    await apiFetch('POST', '/api/user', { nfcId, name, surname, gender });
   } catch (err) {
     console.error('[NAME ENTRY] Failed to register user:', err.message);
+    playErrorBeep();
     pendingNfcId = null;
     nfcFlowInProgress = false;
-    // Return to admin panel if we were in admin context
+    nameEntryFlow = { mode: 'idle', context: 'user', fullName: '' };
     if (adminPassword) {
       showAdminPanel();
       showAdminStatus('Napaka pri registraciji.', 'red');
@@ -568,19 +690,20 @@ async function submitNameEntry() {
     return;
   }
 
-  const user = { id: pendingNfcId, name };
+  const user = { id: nfcId, name, surname, gender };
   pendingNfcId = null;
+  nameEntryFlow = { mode: 'idle', context: 'user', fullName: '' };
 
   // If in admin context, return to admin panel
-  if (adminPassword) {
+  if (adminPassword || flowContext === 'admin') {
     nfcFlowInProgress = false;
     showAdminPanel();
-    showAdminStatus('Uporabnik ' + name + ' dodan!', 'green');
-    console.log('[ADMIN] User registered:', name);
+    showAdminStatus('Uporabnik ' + buildFullName(user) + ' dodan!', 'green');
+    console.log('[ADMIN] User registered:', buildFullName(user));
     return;
   }
 
-  setClockHelperMessage(user.name, 'white');
+  setClockHelperMessage(buildFullName(user), 'white');
   setClockState('success-state');
   playSound('login');
 
@@ -593,12 +716,24 @@ async function submitNameEntry() {
   nfcFlowInProgress = false;
 }
 
-function cancelNameEntry() {
-  // Restore default title
-  document.getElementById('name-entry-title').innerHTML =
-    'Neznan ključ.<br>Vpiši svoje ime:';
+async function cancelNameEntry() {
+  if (nameEntryFlow.mode === 'confirm-create') {
+    pendingNfcId = null;
+    nfcFlowInProgress = false;
+    nameEntryFlow = { mode: 'idle', context: 'user', fullName: '' };
+    showScreen('clock');
+    setClockHelperMessage(DEFAULT_HELPER_TEXT);
+    return;
+  }
+
+  if (nameEntryFlow.mode === 'collect-gender') {
+    await registerPendingUser(nameEntryFlow.fullName, 'male');
+    return;
+  }
+
   pendingNfcId = null;
   nfcFlowInProgress = false;
+  nameEntryFlow = { mode: 'idle', context: 'user', fullName: '' };
   // Return to admin panel if we were in admin context
   if (adminPassword) {
     showAdminPanel();
@@ -606,6 +741,11 @@ function cancelNameEntry() {
     showScreen('clock');
     setClockHelperMessage(DEFAULT_HELPER_TEXT);
   }
+}
+
+function showUnknownUserPrompt() {
+  nameEntryFlow = { mode: 'confirm-create', context: 'user', fullName: '' };
+  showNameEntry();
 }
 
 // =============================================================================
@@ -624,12 +764,6 @@ function updateClock() {
 // Intro animation
 // =============================================================================
 function runIntro() {
-  if (!appConfig.animationsEnabled) {
-    document.getElementById('intro-text').innerHTML =
-      '<div class="intro-line">FABLAB</div><div class="intro-line">MANAGEMENT</div><div class="intro-line">SYSTEM</div>';
-    setTimeout(() => showScreen('clock'), 400);
-    return;
-  }
   console.log('[INTRO] Starting intro animation');
   playSound('intro');
 
@@ -647,6 +781,7 @@ function runIntro() {
 
   function typeNext() {
     if (lineIdx >= lines.length) {
+      cursor.remove();
       // All lines typed — wait, then show clock
       setTimeout(() => {
         console.log('[INTRO] Complete — transitioning to clock screen');
@@ -709,9 +844,9 @@ function buildSimPanel() {
   TEST_USERS.forEach(user => {
     const btn = document.createElement('button');
     btn.className = 'sim-btn';
-    btn.textContent = 'NFC: ' + user.name;
+    btn.textContent = 'NFC: ' + buildFullName(user);
     btn.addEventListener('click', () => {
-      console.log('[SIM] Simulating NFC press — user:', user.name, '(', user.id, ')');
+      console.log('[SIM] Simulating NFC press — user:', buildFullName(user), '(', user.id, ')');
       handleNfcRead(user.id);
     });
     panel.appendChild(btn);
@@ -729,17 +864,48 @@ function buildSimPanel() {
     panel.appendChild(btn);
   });
 
-  // Button that simulates an unrecognised card
+  // Button that simulates user-not-found (unknown tag) flow
+  const missingUserBtn = document.createElement('button');
+  missingUserBtn.className = 'sim-btn';
+  missingUserBtn.textContent = 'NFC: NOT FOUND';
+  missingUserBtn.addEventListener('click', () => {
+    console.log('[SIM] Simulating unknown NFC card (not found)');
+    handleNfcRead('UNKNOWN999');
+  });
+  panel.appendChild(missingUserBtn);
+
+  // Button that simulates an NFC read/server failure
   const failBtn = document.createElement('button');
   failBtn.className = 'sim-btn sim-btn-fail';
-  failBtn.textContent = 'NFC: ???';
+  failBtn.textContent = 'NFC: ERROR';
   failBtn.addEventListener('click', () => {
-    console.log('[SIM] Simulating unknown NFC card (ID: UNKNOWN999)');
-    handleNfcRead('UNKNOWN999');
+    console.log('[SIM] Simulating NFC error flow');
+    simulateNfcReadError();
   });
   panel.appendChild(failBtn);
 
-  console.log('[INIT] Simulation panel built (' + TEST_USERS.length + ' test users + ' + REAL_NFC_TAGS.length + ' real cards + 1 fail button)');
+  console.log('[INIT] Simulation panel built (' +
+    TEST_USERS.length + ' test users + ' +
+    REAL_NFC_TAGS.length + ' real cards + ' +
+    '1 not-found + 1 error button)');
+}
+
+async function simulateNfcReadError() {
+  if (nfcFlowInProgress) {
+    console.warn('[SIM] Ignoring NFC error simulation while flow is active.');
+    return;
+  }
+  nfcFlowInProgress = true;
+  setClockState('');
+  clearNfcFeedback();
+  flashScanCrescendo();
+  await runNfcScramble(350, 50);
+  playErrorBeep();
+  setClockHelperMessage('Napaka NFC branja. Poskusi znova.', 'red', 2500);
+  setClockState('error-state');
+  await sleep(1600);
+  setClockState('');
+  nfcFlowInProgress = false;
 }
 
 // =============================================================================
@@ -833,6 +999,7 @@ async function handleAdminAddUserScan(normId) {
     existingUser = r.found ? r.user : null;
   } catch (err) {
     console.error('[ADMIN] Error checking user:', err.message);
+    playErrorBeep();
     showAdminStatus('Napaka strežnika.', 'red');
     showAdminView('menu');
     return;
@@ -847,13 +1014,8 @@ async function handleAdminAddUserScan(normId) {
 
   // Unknown card — open name entry in admin context
   pendingNfcId = normId;
-  document.getElementById('name-entry-title').textContent =
-    'Nova kartica. Vpiši ime:';
-  const input = document.getElementById('name-entry-input');
-  input.value = '';
-  showScreen('name-entry');
-  // Override submit to return to admin panel
-  setTimeout(() => input.focus(), 100);
+  nameEntryFlow = { mode: 'collect-name', context: 'admin', fullName: '' };
+  showNameEntry();
 }
 
 // =============================================================================
@@ -887,7 +1049,7 @@ async function showAdminDeleteUsers() {
 
     const nameEl = document.createElement('span');
     nameEl.className = 'admin-user-name';
-    nameEl.textContent = user.name;
+    nameEl.textContent = buildFullName(user);
 
     const nfcEl = document.createElement('span');
     nfcEl.className = 'admin-user-nfc';
@@ -906,14 +1068,15 @@ async function showAdminDeleteUsers() {
 }
 
 async function confirmDeleteUser(user, rowEl) {
-  if (!confirm('Izbriši ' + user.name + ' (' + user.nfc_id + ')?')) return;
+  const fullName = buildFullName(user);
+  if (!confirm('Izbriši ' + fullName + ' (' + user.nfc_id + ')?')) return;
 
   try {
     await apiFetch('DELETE', '/api/user/' + encodeURIComponent(user.nfc_id),
       undefined, { 'X-Admin-Password': adminPassword });
     rowEl.remove();
-    showAdminStatus(user.name + ' izbrisan.', 'green');
-    console.log('[ADMIN] Deleted user:', user.name);
+    showAdminStatus(fullName + ' izbrisan.', 'green');
+    console.log('[ADMIN] Deleted user:', fullName);
   } catch (err) {
     console.error('[ADMIN] Delete failed:', err.message);
     showAdminStatus('Napaka pri brisanju.', 'red');

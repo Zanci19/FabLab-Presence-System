@@ -50,6 +50,23 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessions_login    ON sessions(login_time);
 `);
 
+const userColumns = db.prepare('PRAGMA table_info(users)').all();
+if (!userColumns.some(col => col.name === 'gender')) {
+  db.exec("ALTER TABLE users ADD COLUMN gender TEXT NOT NULL DEFAULT 'male'");
+  console.log('[DB] Added users.gender column.');
+}
+if (!userColumns.some(col => col.name === 'surname')) {
+  db.exec("ALTER TABLE users ADD COLUMN surname TEXT NOT NULL DEFAULT ''");
+  console.log('[DB] Added users.surname column.');
+}
+db.exec(`
+  UPDATE users
+  SET
+    name = trim(substr(name, 1, instr(name || ' ', ' ') - 1)),
+    surname = trim(substr(name || ' ', instr(name || ' ', ' ') + 1))
+  WHERE surname = '' AND instr(name, ' ') > 0
+`);
+
 // ---------------------------------------------------------------------------
 // Housekeeping: delete sessions older than 30 days (runs at startup)
 // ---------------------------------------------------------------------------
@@ -66,12 +83,12 @@ function purgeOldSessions() {
 
 // Seed test users so the simulation panel works out of the box
 db.exec(`
-  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
-  VALUES ('NFC001', 'Ana',  datetime('now'), NULL, 0);
-  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
-  VALUES ('NFC002', 'Bor',  datetime('now'), NULL, 0);
-  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
-  VALUES ('NFC003', 'Cene', datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, surname, gender, registered_at, last_seen, scan_count)
+  VALUES ('NFC001', 'Ana', 'Novak',  'female', datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, surname, gender, registered_at, last_seen, scan_count)
+  VALUES ('NFC002', 'Bor', 'Kranjc', 'male', datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, surname, gender, registered_at, last_seen, scan_count)
+  VALUES ('NFC003', 'Cene', 'Zupan', 'male', datetime('now'), NULL, 0);
 `);
 
 purgeOldSessions();
@@ -82,10 +99,10 @@ setInterval(purgeOldSessions, 86_400_000);
 // Prepared statements
 // ---------------------------------------------------------------------------
 const stmtFindUser          = db.prepare('SELECT * FROM users WHERE nfc_id = ?');
-const stmtListUsers         = db.prepare('SELECT * FROM users ORDER BY name ASC');
+const stmtListUsers         = db.prepare('SELECT * FROM users ORDER BY surname ASC, name ASC');
 const stmtDeleteUser        = db.prepare('DELETE FROM users WHERE nfc_id = ?');
 const stmtInsertUser        = db.prepare(
-  'INSERT INTO users (nfc_id, name, registered_at, last_seen, scan_count) VALUES (?, ?, ?, ?, 1)'
+  'INSERT INTO users (nfc_id, name, surname, gender, registered_at, last_seen, scan_count) VALUES (?, ?, ?, ?, ?, ?, 1)'
 );
 const stmtUpdateUserSeen    = db.prepare(
   'UPDATE users SET last_seen = ?, scan_count = scan_count + 1 WHERE nfc_id = ?'
@@ -152,14 +169,17 @@ app.get('/api/user/:nfcId', apiLimiter, (req, res) => {
 
 // ---------------------------------------------------------------------------
 // API — Register a new user
-// POST /api/user  { nfcId, name }
+// POST /api/user  { nfcId, name, surname, gender }
 // ---------------------------------------------------------------------------
 app.post('/api/user', apiLimiter, (req, res) => {
   const nfcId = normaliseNfcId(req.body.nfcId || '');
   const name  = String(req.body.name || '').trim();
+  const surname  = String(req.body.surname || '').trim();
+  const genderRaw = String(req.body.gender || '').trim().toLowerCase();
+  const gender = genderRaw === 'female' ? 'female' : genderRaw === 'male' ? 'male' : '';
 
-  if (!nfcId || !name) {
-    return res.status(400).json({ error: 'nfcId and name are required.' });
+  if (!nfcId || !name || !surname || !gender) {
+    return res.status(400).json({ error: 'nfcId, name, surname and gender are required.' });
   }
 
   const now = new Date().toISOString();
@@ -170,9 +190,9 @@ app.post('/api/user', apiLimiter, (req, res) => {
     return res.json({ created: false, user });
   }
 
-  const info = stmtInsertUser.run(nfcId, name, now, now);
+  const info = stmtInsertUser.run(nfcId, name, surname, gender, now, now);
   user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
-  console.log('[DB] New user registered:', name, '(', nfcId, ')');
+  console.log('[DB] New user registered:', name, surname, '(', nfcId, ')');
   res.status(201).json({ created: true, user });
 });
 
