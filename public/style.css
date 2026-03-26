@@ -217,9 +217,31 @@ body.animations-off *::after {
   text-shadow: 0 0 8px rgba(224,224,224,0.3);
 }
 
+#scan-crescendo {
+  margin-top: 0.55rem;
+  min-height: 1.1em;
+  font-size: clamp(1.1rem, 2.6vw, 2rem);
+  color: var(--white);
+  opacity: 0;
+  transform: translateY(6px) scale(0.84);
+  text-shadow: 0 0 10px rgba(224,224,224,0.42);
+  pointer-events: none;
+}
+
+#scan-crescendo.scan-crescendo-active {
+  animation: scan-crescendo-pulse 0.38s ease-out;
+}
+
+@keyframes scan-crescendo-pulse {
+  0% { opacity: 0; transform: translateY(7px) scale(0.82); }
+  35% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-5px) scale(1.08); }
+}
+
 #screen-clock.success-state #clock-display,
 #screen-clock.success-state #clock-date,
-#screen-clock.success-state #clock-helper {
+#screen-clock.success-state #clock-helper,
+#screen-clock.success-state #scan-crescendo {
   animation: helper-float 2.8s ease-in-out infinite;
 
   color: var(--green);
@@ -228,7 +250,8 @@ body.animations-off *::after {
 
 #screen-clock.error-state #clock-display,
 #screen-clock.error-state #clock-date,
-#screen-clock.error-state #clock-helper {
+#screen-clock.error-state #clock-helper,
+#screen-clock.error-state #scan-crescendo {
   animation: helper-float 2.8s ease-in-out infinite;
 
   color: var(--red);
@@ -237,7 +260,8 @@ body.animations-off *::after {
 
 #screen-clock.logout-state #clock-display,
 #screen-clock.logout-state #clock-date,
-#screen-clock.logout-state #clock-helper {
+#screen-clock.logout-state #clock-helper,
+#screen-clock.logout-state #scan-crescendo {
   animation: helper-float 2.8s ease-in-out infinite;
 
   color: var(--orange);

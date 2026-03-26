@@ -37,7 +37,10 @@ let adminLogsPage    = 1;
 let adminLogsTotal   = 0;
 const ADMIN_LOGS_PER_PAGE = 20;
 const DEFAULT_HELPER_TEXT = 'Prisloni ključ za vstop/izstop...';
-const DEFAULT_CONFIG = Object.freeze({ animationsEnabled: true });
+const DEFAULT_CONFIG = Object.freeze({
+  animationsEnabled: true,
+  logPanelEnabled: true,
+});
 let appConfig = { ...DEFAULT_CONFIG };
 
 // =============================================================================
@@ -105,6 +108,16 @@ function playErrorBeep() {
 // Screen management
 // =============================================================================
 function showScreen(screenId) {
+  const currentlyActive = document.querySelector('.screen.active');
+  const currentScreenId = currentlyActive?.id || '';
+  const targetScreenDomId = 'screen-' + screenId;
+  const isSameScreen = currentScreenId === targetScreenDomId;
+
+  if (isSameScreen) {
+    console.log('[SCREEN] Active screen unchanged:', screenId);
+    return;
+  }
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + screenId);
   if (el) {
@@ -128,21 +141,29 @@ function applyAnimationMode() {
   console.log('[CONFIG] Animations enabled:', appConfig.animationsEnabled);
 }
 
-async function loadConfig() {
-  const coerceAnimationsEnabled = value => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (normalized === 'false') return false;
-      if (normalized === 'true') return true;
-    }
-    return DEFAULT_CONFIG.animationsEnabled;
-  };
+function applyLogPanelMode() {
+  const logPanel = document.getElementById('clock-log-panel');
+  if (!logPanel) return;
+  logPanel.style.display = appConfig.logPanelEnabled ? 'flex' : 'none';
+  console.log('[CONFIG] Log panel enabled:', appConfig.logPanelEnabled);
+}
 
+function coerceBoolean(value, fallback) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'false') return false;
+    if (normalized === 'true') return true;
+  }
+  return fallback;
+}
+
+async function loadConfig() {
   const parseConfig = data => ({
     ...DEFAULT_CONFIG,
     ...data,
-    animationsEnabled: coerceAnimationsEnabled(data?.animationsEnabled),
+    animationsEnabled: coerceBoolean(data?.animationsEnabled, DEFAULT_CONFIG.animationsEnabled),
+    logPanelEnabled: coerceBoolean(data?.logPanelEnabled, DEFAULT_CONFIG.logPanelEnabled),
   });
 
   const configUrls = ['/api/settings', './settings.json'];
@@ -177,6 +198,7 @@ async function loadConfig() {
   }
 
   applyAnimationMode();
+  applyLogPanelMode();
 }
 
 function randomChars(length = 16) {
@@ -212,6 +234,17 @@ function clearNfcFeedback() {
   const fb = document.getElementById('nfc-feedback');
   fb.className = '';
   fb.textContent = '';
+}
+
+function flashScanCrescendo(durationMs = 380) {
+  const el = document.getElementById('scan-crescendo');
+  if (!el) return;
+  el.classList.remove('scan-crescendo-active');
+  void el.offsetWidth;
+  el.classList.add('scan-crescendo-active');
+  setTimeout(() => {
+    el.classList.remove('scan-crescendo-active');
+  }, durationMs);
 }
 
 function sleep(ms) {
@@ -384,6 +417,7 @@ async function handleNfcRead(nfcId) {
 
   setClockState('');
   clearNfcFeedback();
+  flashScanCrescendo();
 
   try {
     await runNfcScramble(500, 50);
@@ -624,12 +658,6 @@ function updateClock() {
 // Intro animation
 // =============================================================================
 function runIntro() {
-  if (!appConfig.animationsEnabled) {
-    document.getElementById('intro-text').innerHTML =
-      '<div class="intro-line">FABLAB</div><div class="intro-line">MANAGEMENT</div><div class="intro-line">SYSTEM</div>';
-    setTimeout(() => showScreen('clock'), 400);
-    return;
-  }
   console.log('[INTRO] Starting intro animation');
   playSound('intro');
 
@@ -647,6 +675,7 @@ function runIntro() {
 
   function typeNext() {
     if (lineIdx >= lines.length) {
+      cursor.remove();
       // All lines typed — wait, then show clock
       setTimeout(() => {
         console.log('[INTRO] Complete — transitioning to clock screen');
