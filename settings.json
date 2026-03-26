@@ -1,3 +1,5 @@
 {
-  "animationsEnabled": false
+  "animationsEnabled": false,
+  "logPanelEnabled": true,
+  "adminPassword": "fablab"
 }

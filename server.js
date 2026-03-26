@@ -6,6 +6,7 @@
 'use strict';
 
 const path       = require('path');
+const fs         = require('fs');
 const express    = require('express');
 const rateLimit  = require('express-rate-limit');
 const Database   = require('better-sqlite3');
@@ -81,6 +82,8 @@ setInterval(purgeOldSessions, 86_400_000);
 // Prepared statements
 // ---------------------------------------------------------------------------
 const stmtFindUser          = db.prepare('SELECT * FROM users WHERE nfc_id = ?');
+const stmtListUsers         = db.prepare('SELECT * FROM users ORDER BY name ASC');
+const stmtDeleteUser        = db.prepare('DELETE FROM users WHERE nfc_id = ?');
 const stmtInsertUser        = db.prepare(
   'INSERT INTO users (nfc_id, name, registered_at, last_seen, scan_count) VALUES (?, ?, ?, ?, 1)'
 );
@@ -263,18 +266,126 @@ app.get('/api/session/active/:nfcId', apiLimiter, (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Helper: load settings (always fresh read so edits take effect without restart)
+// ---------------------------------------------------------------------------
+function loadSettings() {
+  const settingsPath = path.join(__dirname, 'settings.json');
+  try {
+    return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  } catch (err) {
+    console.warn('[SETTINGS] Could not read settings.json:', err.message);
+    return { animationsEnabled: true, adminPassword: 'admin' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Admin auth middleware
+// ---------------------------------------------------------------------------
+function requireAdmin(req, res, next) {
+  const settings = loadSettings();
+  const adminPassword = settings.adminPassword || 'admin';
+  const provided =
+    req.headers['x-admin-password'] ||
+    (req.body && req.body.adminPassword);
+  if (!provided || provided !== adminPassword) {
+    return res.status(401).json({ error: 'Invalid admin password.' });
+  }
+  next();
+}
+
+// ---------------------------------------------------------------------------
 // API — Get app settings (avoids CORS issues with direct file fetch)
 // GET /api/settings
 // ---------------------------------------------------------------------------
 app.get('/api/settings', apiLimiter, (req, res) => {
-  const settingsPath = path.join(__dirname, 'public', 'settings.json');
-  try {
-    const data = JSON.parse(require('fs').readFileSync(settingsPath, 'utf8'));
-    res.json(data);
-  } catch (err) {
-    console.warn('[SETTINGS] Could not read settings.json:', err.message);
-    res.json({ animationsEnabled: true });
+  const data = loadSettings();
+  // Never expose the admin password to the frontend
+  const { adminPassword: _adminPw, ...safeData } = data;
+  res.json(safeData);
+});
+
+// ---------------------------------------------------------------------------
+// API — Verify admin password
+// POST /api/admin/verify  { adminPassword }
+// ---------------------------------------------------------------------------
+app.post('/api/admin/verify', apiLimiter, (req, res) => {
+  const settings = loadSettings();
+  const adminPassword = settings.adminPassword || 'admin';
+  const provided = String(req.body.adminPassword ?? '');
+  if (!provided || provided !== adminPassword) {
+    return res.status(401).json({ ok: false, error: 'Wrong password.' });
   }
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// API — List all users (admin)
+// GET /api/users
+// ---------------------------------------------------------------------------
+app.get('/api/users', apiLimiter, requireAdmin, (req, res) => {
+  const users = stmtListUsers.all();
+  res.json({ users });
+});
+
+// ---------------------------------------------------------------------------
+// API — Delete a user by NFC ID (admin)
+// DELETE /api/user/:nfcId
+// ---------------------------------------------------------------------------
+app.delete('/api/user/:nfcId', apiLimiter, requireAdmin, (req, res) => {
+  const nfcId = normaliseNfcId(req.params.nfcId);
+  const user  = stmtFindUser.get(nfcId);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+  stmtDeleteUser.run(nfcId);
+  console.log('[DB] User deleted:', user.name, '(', nfcId, ')');
+  res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// API — Recent sessions (for log panel, no auth)
+// GET /api/sessions/recent?limit=5
+// ---------------------------------------------------------------------------
+app.get('/api/sessions/recent', apiLimiter, (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 5, 20);
+  const rows = db.prepare(
+    'SELECT name, login_time, logout_time FROM sessions ORDER BY id DESC LIMIT ?'
+  ).all(limit);
+  res.json({ sessions: rows });
+});
+
+// ---------------------------------------------------------------------------
+// API — Sessions list (admin, paginated)
+// GET /api/sessions?page=1&per=30
+// ---------------------------------------------------------------------------
+app.get('/api/sessions', apiLimiter, requireAdmin, (req, res) => {
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const per  = Math.min(parseInt(req.query.per,  10) || 30, 100);
+  const offset = (page - 1) * per;
+  const rows = db.prepare(
+    'SELECT * FROM sessions ORDER BY id DESC LIMIT ? OFFSET ?'
+  ).all(per, offset);
+  const total = db.prepare('SELECT COUNT(*) AS n FROM sessions').get().n;
+  res.json({ sessions: rows, total, page, per });
+});
+
+// ---------------------------------------------------------------------------
+// API — Export sessions as CSV (admin)
+// POST /api/sessions/export  { adminPassword }
+// ---------------------------------------------------------------------------
+app.post('/api/sessions/export', apiLimiter, requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT * FROM sessions ORDER BY id DESC').all();
+  const header = 'id,nfc_id,name,date,login_time,logout_time,duration_sec,activity,ip_address\n';
+  const lines = rows.map(r =>
+    [r.id, r.nfc_id, r.name, r.date, r.login_time,
+     r.logout_time || '', r.duration_sec || '', r.activity || '', r.ip_address || '']
+      .map(v => '"' + String(v).replace(/"/g, '""') + '"')
+      .join(',')
+  );
+  const csv = header + lines.join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="fablab-sessions.csv"');
+  res.send(csv);
 });
 
 // ---------------------------------------------------------------------------

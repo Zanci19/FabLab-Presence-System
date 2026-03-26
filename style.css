@@ -172,6 +172,19 @@ body.animations-off *::after {
 /* =============================================================================
    CLOCK SCREEN
    ============================================================================= */
+#screen-clock {
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+#clock-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 #clock-display {
   animation: clock-pulse 2.6s ease-in-out infinite;
 
@@ -407,8 +420,447 @@ body.animations-off *::after {
 }
 
 /* =============================================================================
-   NAME ENTRY SCREEN
+   LOG PANEL (right side of clock screen)
    ============================================================================= */
+#clock-log-panel {
+  width: clamp(120px, 22vw, 220px);
+  border-left: 1px solid #222;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(0.6rem, 1.5vh, 1.2rem) clamp(0.5rem, 1.2vw, 1rem);
+  background: rgba(0,0,0,0.3);
+  z-index: 20;
+}
+
+#clock-log-title {
+  font-size: clamp(0.55rem, 1.4vw, 0.85rem);
+  color: var(--dim);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 0.7rem;
+  border-bottom: 1px solid #222;
+  padding-bottom: 0.4rem;
+}
+
+#clock-log-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+#clock-log-list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: clamp(0.6rem, 1.5vw, 0.9rem);
+  letter-spacing: 0.08em;
+  color: #888;
+  gap: 0.5rem;
+}
+
+#clock-log-list li .log-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  color: var(--white);
+  opacity: 0.75;
+}
+
+#clock-log-list li .log-time {
+  flex-shrink: 0;
+  color: var(--green);
+  opacity: 0.7;
+  font-size: clamp(0.55rem, 1.3vw, 0.82rem);
+}
+
+#clock-log-list li.log-entry-new {
+  animation: log-flash 0.6s ease-out;
+}
+
+@keyframes log-flash {
+  0% { color: var(--green); opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* =============================================================================
+   ADMIN PASSWORD SCREEN
+   ============================================================================= */
+#screen-admin-password {
+  gap: 2.5vh;
+  background: #000;
+}
+
+#admin-pass-title {
+  font-size: clamp(1.8rem, 5vw, 3.5rem);
+  letter-spacing: 0.4em;
+  color: var(--orange);
+  text-shadow:
+    0 0 8px var(--orange),
+    0 0 24px rgba(255,140,0,0.3);
+  text-transform: uppercase;
+}
+
+#admin-pass-hint {
+  font-size: clamp(0.7rem, 2vw, 1.2rem);
+  color: var(--dim);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+#admin-pass-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: min(75vw, 420px);
+}
+
+#admin-pass-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  border-bottom-color: var(--orange);
+  color: var(--white);
+  font-family: inherit;
+  font-size: clamp(1rem, 2.8vw, 1.7rem);
+  letter-spacing: 0.3em;
+  padding: 0.5rem 0.4rem;
+  text-align: center;
+  outline: none;
+  caret-color: var(--orange);
+}
+
+#admin-pass-input:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 10px rgba(255,140,0,0.2);
+}
+
+#admin-pass-submit,
+#admin-pass-cancel {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  color: #aaa;
+  font-family: inherit;
+  font-size: clamp(0.75rem, 2vw, 1.3rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.07s, color 0.07s, border-color 0.07s, box-shadow 0.07s;
+}
+
+#admin-pass-submit:hover,
+#admin-pass-submit:focus {
+  background: var(--orange);
+  color: #000;
+  border-color: var(--orange);
+  box-shadow: 0 0 10px rgba(255,140,0,0.4);
+  outline: none;
+}
+
+#admin-pass-cancel:hover,
+#admin-pass-cancel:focus {
+  border-color: var(--red);
+  color: var(--red);
+  outline: none;
+}
+
+/* =============================================================================
+   ADMIN PANEL SCREEN
+   ============================================================================= */
+#screen-admin {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: #000;
+}
+
+#admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(0.5rem, 1.5vh, 1rem) clamp(0.8rem, 2vw, 1.5rem);
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+#admin-title {
+  font-size: clamp(0.9rem, 2.5vw, 1.6rem);
+  letter-spacing: 0.35em;
+  color: var(--orange);
+  text-shadow: 0 0 8px rgba(255,140,0,0.35);
+  text-transform: uppercase;
+}
+
+#admin-exit {
+  background: transparent;
+  border: 1px solid #333;
+  color: var(--dim);
+  font-family: inherit;
+  font-size: clamp(0.65rem, 1.8vw, 1.1rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.07s, color 0.07s;
+}
+
+#admin-exit:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+#admin-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(0.5rem, 1.5vh, 1rem);
+}
+
+/* Admin main menu */
+#admin-view-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.5rem, 1.5vw, 1rem);
+  width: min(88vw, 640px);
+}
+
+.admin-menu-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: clamp(0.8rem, 2.5vh, 1.8rem) 1rem;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #888;
+  font-family: inherit;
+  font-size: clamp(0.72rem, 1.9vw, 1.2rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.08s, color 0.08s, border-color 0.08s, box-shadow 0.08s;
+}
+
+.admin-menu-btn:hover,
+.admin-menu-btn:focus {
+  background: rgba(255,140,0,0.08);
+  border-color: var(--orange);
+  color: var(--orange);
+  box-shadow: 0 0 12px rgba(255,140,0,0.2);
+  outline: none;
+}
+
+.admin-menu-icon {
+  font-size: clamp(1.2rem, 3.5vw, 2.2rem);
+  display: block;
+}
+
+/* Admin sub-views */
+.admin-view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 1.5vh, 1rem);
+  max-height: calc(100vh - 80px);
+}
+
+#admin-adduser-status {
+  font-size: clamp(0.9rem, 2.8vw, 1.8rem);
+  letter-spacing: 0.2em;
+  color: var(--orange);
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255,140,0,0.3);
+  animation: admin-pulse 2s ease-in-out infinite;
+}
+
+@keyframes admin-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.admin-back-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #666;
+  font-family: inherit;
+  font-size: clamp(0.65rem, 1.8vw, 1.1rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.4rem 1.5rem;
+  cursor: pointer;
+  transition: border-color 0.07s, color 0.07s;
+  margin-top: 0.5rem;
+}
+
+.admin-back-btn:hover {
+  border-color: var(--white);
+  color: var(--white);
+}
+
+/* Delete user list */
+#admin-deluser-title,
+#admin-logs-title {
+  font-size: clamp(0.65rem, 1.8vw, 1.1rem);
+  letter-spacing: 0.3em;
+  color: var(--dim);
+  text-transform: uppercase;
+  align-self: flex-start;
+  padding-left: min(6vw, 2rem);
+}
+
+#admin-deluser-list {
+  width: min(90vw, 620px);
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid #1e1e1e;
+  gap: 1rem;
+}
+
+.admin-user-row:hover {
+  border-color: #333;
+}
+
+.admin-user-name {
+  font-size: clamp(0.75rem, 2vw, 1.2rem);
+  letter-spacing: 0.12em;
+  color: var(--white);
+  opacity: 0.8;
+}
+
+.admin-user-nfc {
+  font-size: clamp(0.55rem, 1.4vw, 0.85rem);
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+
+.admin-user-delete {
+  background: transparent;
+  border: 1px solid #333;
+  color: #555;
+  font-family: inherit;
+  font-size: clamp(0.6rem, 1.5vw, 0.9rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.07s, color 0.07s;
+}
+
+.admin-user-delete:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* Logs table */
+#admin-logs-table-wrap {
+  width: min(94vw, 720px);
+  overflow: auto;
+  max-height: calc(100vh - 230px);
+  border: 1px solid #1a1a1a;
+}
+
+#admin-logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.55rem, 1.4vw, 0.85rem);
+  letter-spacing: 0.06em;
+}
+
+#admin-logs-table th {
+  background: #0a0a0a;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid #222;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+}
+
+#admin-logs-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid #111;
+  color: #999;
+  white-space: nowrap;
+}
+
+#admin-logs-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+  color: var(--white);
+}
+
+#admin-logs-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+.admin-nav-btn {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #555;
+  font-family: inherit;
+  font-size: clamp(0.65rem, 1.8vw, 1rem);
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.07s, color 0.07s;
+}
+
+.admin-nav-btn:hover:not(:disabled) {
+  border-color: var(--white);
+  color: var(--white);
+}
+
+.admin-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+#admin-logs-page {
+  font-size: clamp(0.6rem, 1.6vw, 1rem);
+  color: var(--dim);
+  letter-spacing: 0.15em;
+  min-width: 2ch;
+  text-align: center;
+}
+
+/* Admin status message bar */
+#admin-status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  text-align: center;
+  padding: 0.4rem;
+  font-size: clamp(0.6rem, 1.6vw, 0.95rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
 #screen-name-entry {
   gap: 3vh;
 }
