@@ -397,6 +397,13 @@ async function apiFetch(method, url, body, extraHeaders) {
 // NFC read handler
 // =============================================================================
 async function handleNfcRead(nfcId) {
+  const activeScreen = document.querySelector('.screen.active');
+  if (activeScreen?.id === 'screen-greeting') {
+    console.warn('[NFC] Scan ignored while activity picker is active.');
+    playErrorBeep();
+    return;
+  }
+
   // --- Admin "add user" mode: capture this scan ---
   if (adminAddUserMode) {
     adminAddUserMode = false;
@@ -758,17 +765,35 @@ function buildSimPanel() {
     panel.appendChild(btn);
   });
 
-  // Button that simulates an unrecognised card
+  // Button that simulates an NFC read/server failure
   const failBtn = document.createElement('button');
   failBtn.className = 'sim-btn sim-btn-fail';
-  failBtn.textContent = 'NFC: ???';
+  failBtn.textContent = 'NFC: ERROR';
   failBtn.addEventListener('click', () => {
-    console.log('[SIM] Simulating unknown NFC card (ID: UNKNOWN999)');
-    handleNfcRead('UNKNOWN999');
+    console.log('[SIM] Simulating NFC error flow');
+    simulateNfcReadError();
   });
   panel.appendChild(failBtn);
 
-  console.log('[INIT] Simulation panel built (' + TEST_USERS.length + ' test users + ' + REAL_NFC_TAGS.length + ' real cards + 1 fail button)');
+  console.log('[INIT] Simulation panel built (' + TEST_USERS.length + ' test users + ' + REAL_NFC_TAGS.length + ' real cards + 1 error button)');
+}
+
+async function simulateNfcReadError() {
+  if (nfcFlowInProgress) {
+    console.warn('[SIM] Ignoring NFC error simulation while flow is active.');
+    return;
+  }
+  nfcFlowInProgress = true;
+  setClockState('');
+  clearNfcFeedback();
+  flashScanCrescendo();
+  await runNfcScramble(350, 50);
+  playErrorBeep();
+  setClockHelperMessage('Napaka NFC branja. Poskusi znova.', 'red', 2500);
+  setClockState('error-state');
+  await sleep(1600);
+  setClockState('');
+  nfcFlowInProgress = false;
 }
 
 // =============================================================================
