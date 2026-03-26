@@ -229,25 +229,17 @@ body.animations-off *::after {
 }
 
 .scan-crescendo-icon {
-  position: relative;
-  width: clamp(1.2rem, 3vw, 2.1rem);
-  height: clamp(0.8rem, 2.1vw, 1.4rem);
-  border-top: 2px solid rgba(224,224,224,0.9);
-  border-bottom: 2px solid rgba(224,224,224,0.9);
-  border-right: 2px solid rgba(224,224,224,0.9);
-  border-left: none;
-  transform: skewX(-16deg);
+  width: clamp(1rem, 2.7vw, 1.8rem);
+  height: clamp(1rem, 2.7vw, 1.8rem);
+  border: 2px solid rgba(224,224,224,0.35);
+  border-top-color: rgba(224,224,224,1);
+  border-radius: 50%;
   box-shadow: 0 0 10px rgba(224,224,224,0.42);
+  animation: spinner-rotate 0.55s linear infinite;
 }
 
-.scan-crescendo-icon::before {
-  content: '';
-  position: absolute;
-  inset: 20% 18%;
-  border-top: 2px solid rgba(224,224,224,0.9);
-  border-bottom: 2px solid rgba(224,224,224,0.9);
-  border-right: 2px solid rgba(224,224,224,0.9);
-  border-left: none;
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
 }
 
 #scan-crescendo.scan-crescendo-active {
@@ -255,9 +247,9 @@ body.animations-off *::after {
 }
 
 @keyframes scan-crescendo-pulse {
-  0% { opacity: 0; transform: translateY(7px) scale(0.82) rotate(-35deg); }
-  35% { opacity: 1; transform: translateY(0) scale(1) rotate(40deg); }
-  100% { opacity: 0; transform: translateY(-5px) scale(1.08) rotate(220deg); }
+  0% { opacity: 0; transform: translateY(7px) scale(0.82); }
+  35% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-5px) scale(1.08); }
 }
 
 #screen-clock.success-state #clock-display,

@@ -50,6 +50,12 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessions_login    ON sessions(login_time);
 `);
 
+const userColumns = db.prepare('PRAGMA table_info(users)').all();
+if (!userColumns.some(col => col.name === 'gender')) {
+  db.exec("ALTER TABLE users ADD COLUMN gender TEXT NOT NULL DEFAULT 'male'");
+  console.log('[DB] Added users.gender column.');
+}
+
 // ---------------------------------------------------------------------------
 // Housekeeping: delete sessions older than 30 days (runs at startup)
 // ---------------------------------------------------------------------------
@@ -66,12 +72,12 @@ function purgeOldSessions() {
 
 // Seed test users so the simulation panel works out of the box
 db.exec(`
-  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
-  VALUES ('NFC001', 'Ana',  datetime('now'), NULL, 0);
-  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
-  VALUES ('NFC002', 'Bor',  datetime('now'), NULL, 0);
-  INSERT OR IGNORE INTO users (nfc_id, name, registered_at, last_seen, scan_count)
-  VALUES ('NFC003', 'Cene', datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, gender, registered_at, last_seen, scan_count)
+  VALUES ('NFC001', 'Ana Novak',  'female', datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, gender, registered_at, last_seen, scan_count)
+  VALUES ('NFC002', 'Bor Kranjc', 'male', datetime('now'), NULL, 0);
+  INSERT OR IGNORE INTO users (nfc_id, name, gender, registered_at, last_seen, scan_count)
+  VALUES ('NFC003', 'Cene Zupan', 'male', datetime('now'), NULL, 0);
 `);
 
 purgeOldSessions();
@@ -85,7 +91,7 @@ const stmtFindUser          = db.prepare('SELECT * FROM users WHERE nfc_id = ?')
 const stmtListUsers         = db.prepare('SELECT * FROM users ORDER BY name ASC');
 const stmtDeleteUser        = db.prepare('DELETE FROM users WHERE nfc_id = ?');
 const stmtInsertUser        = db.prepare(
-  'INSERT INTO users (nfc_id, name, registered_at, last_seen, scan_count) VALUES (?, ?, ?, ?, 1)'
+  'INSERT INTO users (nfc_id, name, gender, registered_at, last_seen, scan_count) VALUES (?, ?, ?, ?, ?, 1)'
 );
 const stmtUpdateUserSeen    = db.prepare(
   'UPDATE users SET last_seen = ?, scan_count = scan_count + 1 WHERE nfc_id = ?'
@@ -157,9 +163,11 @@ app.get('/api/user/:nfcId', apiLimiter, (req, res) => {
 app.post('/api/user', apiLimiter, (req, res) => {
   const nfcId = normaliseNfcId(req.body.nfcId || '');
   const name  = String(req.body.name || '').trim();
+  const genderRaw = String(req.body.gender || '').trim().toLowerCase();
+  const gender = genderRaw === 'female' ? 'female' : genderRaw === 'male' ? 'male' : '';
 
-  if (!nfcId || !name) {
-    return res.status(400).json({ error: 'nfcId and name are required.' });
+  if (!nfcId || !name || name.split(/\s+/).length < 2 || !gender) {
+    return res.status(400).json({ error: 'nfcId, full name and gender are required.' });
   }
 
   const now = new Date().toISOString();
@@ -170,7 +178,7 @@ app.post('/api/user', apiLimiter, (req, res) => {
     return res.json({ created: false, user });
   }
 
-  const info = stmtInsertUser.run(nfcId, name, now, now);
+  const info = stmtInsertUser.run(nfcId, name, gender, now, now);
   user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
   console.log('[DB] New user registered:', name, '(', nfcId, ')');
   res.status(201).json({ created: true, user });
