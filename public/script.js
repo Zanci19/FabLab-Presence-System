@@ -845,6 +845,16 @@ function buildSimPanel() {
     panel.appendChild(btn);
   });
 
+  // Button that simulates user-not-found (unknown tag) flow
+  const missingUserBtn = document.createElement('button');
+  missingUserBtn.className = 'sim-btn';
+  missingUserBtn.textContent = 'NFC: NOT FOUND';
+  missingUserBtn.addEventListener('click', () => {
+    console.log('[SIM] Simulating unknown NFC card (not found)');
+    handleNfcRead('UNKNOWN999');
+  });
+  panel.appendChild(missingUserBtn);
+
   // Button that simulates an NFC read/server failure
   const failBtn = document.createElement('button');
   failBtn.className = 'sim-btn sim-btn-fail';
@@ -855,7 +865,41 @@ function buildSimPanel() {
   });
   panel.appendChild(failBtn);
 
-  console.log('[INIT] Simulation panel built (' + TEST_USERS.length + ' test users + ' + REAL_NFC_TAGS.length + ' real cards + 1 error button)');
+  const adminBtn = document.createElement('button');
+  adminBtn.className = 'sim-btn';
+  adminBtn.textContent = 'ADMIN: AUTO LOGIN';
+  adminBtn.addEventListener('click', async () => {
+    console.log('[SIM] Simulating admin login from settings password');
+    await simulateAdminLoginFromSettings();
+  });
+  panel.appendChild(adminBtn);
+
+  console.log('[INIT] Simulation panel built (' +
+    TEST_USERS.length + ' test users + ' +
+    REAL_NFC_TAGS.length + ' real cards + ' +
+    '1 not-found + 1 error + 1 admin button)');
+}
+
+async function loadSimulationAdminPassword() {
+  try {
+    const response = await fetch('./settings.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    if (typeof data.adminPassword === 'string' && data.adminPassword.trim()) {
+      return data.adminPassword;
+    }
+  } catch (err) {
+    console.warn('[SIM] Could not read adminPassword from settings.json:', err.message);
+  }
+  return 'admin';
+}
+
+async function simulateAdminLoginFromSettings() {
+  const password = await loadSimulationAdminPassword();
+  showAdminPasswordScreen();
+  const input = document.getElementById('admin-pass-input');
+  input.value = password;
+  await submitAdminPassword();
 }
 
 async function simulateNfcReadError() {

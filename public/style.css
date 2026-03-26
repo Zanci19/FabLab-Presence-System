@@ -221,7 +221,7 @@ body.animations-off *::after {
   margin-top: 0.55rem;
   min-height: 1.1em;
   opacity: 0;
-  transform: translateY(6px) scale(0.84) rotate(0deg);
+  transform: scale(0.84);
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -247,9 +247,9 @@ body.animations-off *::after {
 }
 
 @keyframes scan-crescendo-pulse {
-  0% { opacity: 0; transform: translateY(7px) scale(0.82); }
-  35% { opacity: 1; transform: translateY(0) scale(1); }
-  100% { opacity: 0; transform: translateY(-5px) scale(1.08); }
+  0% { opacity: 0; transform: scale(0.82); }
+  35% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.08); }
 }
 
 #screen-clock.success-state #clock-display,
