@@ -266,6 +266,10 @@ function buildFullName(user) {
   return String(user.name || '').trim();
 }
 
+function buildFirstName(user) {
+  return String(user?.name || '').trim();
+}
+
 function splitFullName(fullName) {
   const parts = fullName.trim().replace(/\s+/g, ' ').split(' ');
   const name = parts.shift() || '';
@@ -570,7 +574,7 @@ function showGreeting(user) {
   setClockState('');
   setClockHelperMessage(DEFAULT_HELPER_TEXT);
   document.getElementById('greeting-text').innerHTML =
-    'Živjo ' + buildFullName(user) + '.<br>Kaj delaš danes?';
+    'Živjo ' + buildFirstName(user) + '.<br>Kaj delaš danes?';
   showScreen('greeting');
 }
 

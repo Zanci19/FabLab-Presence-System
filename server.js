@@ -27,6 +27,8 @@ db.exec(`
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     nfc_id       TEXT    NOT NULL UNIQUE,
     name         TEXT    NOT NULL,
+    surname      TEXT    NOT NULL DEFAULT '',
+    gender       TEXT    NOT NULL DEFAULT 'male',
     registered_at TEXT   NOT NULL,
     last_seen    TEXT,
     scan_count   INTEGER NOT NULL DEFAULT 0
@@ -50,7 +52,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessions_login    ON sessions(login_time);
 `);
 
-const userColumns = db.prepare('PRAGMA table_info(users)').all();
+let userColumns = db.prepare('PRAGMA table_info(users)').all();
 if (!userColumns.some(col => col.name === 'gender')) {
   db.exec("ALTER TABLE users ADD COLUMN gender TEXT NOT NULL DEFAULT 'male'");
   console.log('[DB] Added users.gender column.');
@@ -58,6 +60,31 @@ if (!userColumns.some(col => col.name === 'gender')) {
 if (!userColumns.some(col => col.name === 'surname')) {
   db.exec("ALTER TABLE users ADD COLUMN surname TEXT NOT NULL DEFAULT ''");
   console.log('[DB] Added users.surname column.');
+}
+userColumns = db.prepare('PRAGMA table_info(users)').all();
+const userColumnOrder = userColumns.map(col => col.name).join(',');
+const expectedUserColumnOrder = 'id,nfc_id,name,surname,gender,registered_at,last_seen,scan_count';
+if (userColumnOrder !== expectedUserColumnOrder) {
+  db.exec(`
+    BEGIN;
+    CREATE TABLE users_new (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      nfc_id        TEXT    NOT NULL UNIQUE,
+      name          TEXT    NOT NULL,
+      surname       TEXT    NOT NULL DEFAULT '',
+      gender        TEXT    NOT NULL DEFAULT 'male',
+      registered_at TEXT    NOT NULL,
+      last_seen     TEXT,
+      scan_count    INTEGER NOT NULL DEFAULT 0
+    );
+    INSERT INTO users_new (id, nfc_id, name, surname, gender, registered_at, last_seen, scan_count)
+    SELECT id, nfc_id, name, surname, gender, registered_at, last_seen, scan_count
+    FROM users;
+    DROP TABLE users;
+    ALTER TABLE users_new RENAME TO users;
+    COMMIT;
+  `);
+  console.log('[DB] Rebuilt users table to normalize column order.');
 }
 db.exec(`
   UPDATE users
@@ -162,7 +189,7 @@ app.get('/api/user/:nfcId', apiLimiter, (req, res) => {
   const nfcId = normaliseNfcId(req.params.nfcId);
   const user  = stmtFindUser.get(nfcId);
   if (!user) {
-    return res.status(404).json({ found: false });
+    return res.json({ found: false });
   }
   res.json({ found: true, user });
 });
