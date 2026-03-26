@@ -4,9 +4,9 @@
 
 // --- Test data (kept for simulation panel) ---
 const TEST_USERS = [
-  { id: 'NFC001', name: 'Ana Novak', gender: 'female' },
-  { id: 'NFC002', name: 'Bor Kranjc', gender: 'male' },
-  { id: 'NFC003', name: 'Cene Zupan', gender: 'male' },
+  { id: 'NFC001', name: 'Ana', surname: 'Novak', gender: 'female' },
+  { id: 'NFC002', name: 'Bor', surname: 'Kranjc', gender: 'male' },
+  { id: 'NFC003', name: 'Cene', surname: 'Zupan', gender: 'male' },
 ];
 
 // Real NFC tag UIDs from physical cards (UID normalised: no colons, uppercase)
@@ -260,6 +260,19 @@ function isFemaleUser(user) {
   return user?.gender === 'female';
 }
 
+function buildFullName(user) {
+  if (!user) return '';
+  if (user.surname) return (user.name + ' ' + user.surname).trim();
+  return String(user.name || '').trim();
+}
+
+function splitFullName(fullName) {
+  const parts = fullName.trim().replace(/\s+/g, ' ').split(' ');
+  const name = parts.shift() || '';
+  const surname = parts.join(' ').trim();
+  return { name, surname };
+}
+
 function setClockState(state = '') {
   const clockScreen = document.getElementById('screen-clock');
   clockScreen.classList.remove('success-state', 'error-state', 'logout-state');
@@ -461,7 +474,12 @@ async function handleNfcRead(nfcId) {
       return;
     }
 
-    const user = { id: normId, name: userResult.user.name, gender: userResult.user.gender || 'male' };
+    const user = {
+      id: normId,
+      name: userResult.user.name,
+      surname: userResult.user.surname || '',
+      gender: userResult.user.gender || 'male',
+    };
     console.log('[NFC] Recognised user:', user.name, '(', normId, ')');
 
     // Check for an active session today
@@ -477,7 +495,7 @@ async function handleNfcRead(nfcId) {
 
     const isLogoutFlow = activeResult.found;
 
-    setClockHelperMessage(user.name, isLogoutFlow ? 'orange' : 'white');
+    setClockHelperMessage(buildFullName(user), isLogoutFlow ? 'orange' : 'white');
     setClockState(isLogoutFlow ? 'logout-state' : 'success-state');
     playSound('login');
     await sleep(900);
@@ -498,12 +516,12 @@ async function handleNfcRead(nfcId) {
 // =============================================================================
 async function doLogin(user) {
   const loginTime = new Date();
-  console.log('[LOGIN] User:', user.name, '| Time:', formatTime(loginTime), '| Date:', getTodayKey());
+  console.log('[LOGIN] User:', buildFullName(user), '| Time:', formatTime(loginTime), '| Date:', getTodayKey());
 
   try {
     const result = await apiFetch('POST', '/api/session/login', {
       nfcId:     user.id,
-      name:      user.name,
+      name:      buildFullName(user),
       userAgent: navigator.userAgent,
     });
     activeSessionId = result.session.id;
@@ -548,11 +566,11 @@ async function doLogout(user, sessionId) {
 // Greeting + activity selection screen
 // =============================================================================
 function showGreeting(user) {
-  console.log('[GREETING] Showing greeting for:', user.name);
+  console.log('[GREETING] Showing greeting for:', buildFullName(user));
   setClockState('');
   setClockHelperMessage(DEFAULT_HELPER_TEXT);
   document.getElementById('greeting-text').innerHTML =
-    'Živjo ' + user.name + '.<br>Kaj delaš danes?';
+    'Živjo ' + buildFullName(user) + '.<br>Kaj delaš danes?';
   showScreen('greeting');
 }
 
@@ -651,10 +669,11 @@ async function submitNameEntry() {
 async function registerPendingUser(fullName, gender) {
   const nfcId = pendingNfcId;
   const flowContext = nameEntryFlow.context;
+  const { name, surname } = splitFullName(fullName);
   console.log('[NAME ENTRY] Registering:', fullName, '(' + nfcId + ')', '| gender:', gender);
 
   try {
-    await apiFetch('POST', '/api/user', { nfcId, name: fullName, gender });
+    await apiFetch('POST', '/api/user', { nfcId, name, surname, gender });
   } catch (err) {
     console.error('[NAME ENTRY] Failed to register user:', err.message);
     playErrorBeep();
@@ -671,7 +690,7 @@ async function registerPendingUser(fullName, gender) {
     return;
   }
 
-  const user = { id: nfcId, name: fullName, gender };
+  const user = { id: nfcId, name, surname, gender };
   pendingNfcId = null;
   nameEntryFlow = { mode: 'idle', context: 'user', fullName: '' };
 
@@ -679,12 +698,12 @@ async function registerPendingUser(fullName, gender) {
   if (adminPassword || flowContext === 'admin') {
     nfcFlowInProgress = false;
     showAdminPanel();
-    showAdminStatus('Uporabnik ' + fullName + ' dodan!', 'green');
-    console.log('[ADMIN] User registered:', fullName);
+    showAdminStatus('Uporabnik ' + buildFullName(user) + ' dodan!', 'green');
+    console.log('[ADMIN] User registered:', buildFullName(user));
     return;
   }
 
-  setClockHelperMessage(user.name, 'white');
+  setClockHelperMessage(buildFullName(user), 'white');
   setClockState('success-state');
   playSound('login');
 
@@ -825,9 +844,9 @@ function buildSimPanel() {
   TEST_USERS.forEach(user => {
     const btn = document.createElement('button');
     btn.className = 'sim-btn';
-    btn.textContent = 'NFC: ' + user.name;
+    btn.textContent = 'NFC: ' + buildFullName(user);
     btn.addEventListener('click', () => {
-      console.log('[SIM] Simulating NFC press — user:', user.name, '(', user.id, ')');
+      console.log('[SIM] Simulating NFC press — user:', buildFullName(user), '(', user.id, ')');
       handleNfcRead(user.id);
     });
     panel.appendChild(btn);
@@ -865,41 +884,10 @@ function buildSimPanel() {
   });
   panel.appendChild(failBtn);
 
-  const adminBtn = document.createElement('button');
-  adminBtn.className = 'sim-btn';
-  adminBtn.textContent = 'ADMIN: AUTO LOGIN';
-  adminBtn.addEventListener('click', async () => {
-    console.log('[SIM] Simulating admin login from settings password');
-    await simulateAdminLoginFromSettings();
-  });
-  panel.appendChild(adminBtn);
-
   console.log('[INIT] Simulation panel built (' +
     TEST_USERS.length + ' test users + ' +
     REAL_NFC_TAGS.length + ' real cards + ' +
-    '1 not-found + 1 error + 1 admin button)');
-}
-
-async function loadSimulationAdminPassword() {
-  try {
-    const response = await fetch('./settings.json', { cache: 'no-store' });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    const data = await response.json();
-    if (typeof data.adminPassword === 'string' && data.adminPassword.trim()) {
-      return data.adminPassword;
-    }
-  } catch (err) {
-    console.warn('[SIM] Could not read adminPassword from settings.json:', err.message);
-  }
-  return 'admin';
-}
-
-async function simulateAdminLoginFromSettings() {
-  const password = await loadSimulationAdminPassword();
-  showAdminPasswordScreen();
-  const input = document.getElementById('admin-pass-input');
-  input.value = password;
-  await submitAdminPassword();
+    '1 not-found + 1 error button)');
 }
 
 async function simulateNfcReadError() {
@@ -1061,7 +1049,7 @@ async function showAdminDeleteUsers() {
 
     const nameEl = document.createElement('span');
     nameEl.className = 'admin-user-name';
-    nameEl.textContent = user.name;
+    nameEl.textContent = buildFullName(user);
 
     const nfcEl = document.createElement('span');
     nfcEl.className = 'admin-user-nfc';
@@ -1080,14 +1068,15 @@ async function showAdminDeleteUsers() {
 }
 
 async function confirmDeleteUser(user, rowEl) {
-  if (!confirm('Izbriši ' + user.name + ' (' + user.nfc_id + ')?')) return;
+  const fullName = buildFullName(user);
+  if (!confirm('Izbriši ' + fullName + ' (' + user.nfc_id + ')?')) return;
 
   try {
     await apiFetch('DELETE', '/api/user/' + encodeURIComponent(user.nfc_id),
       undefined, { 'X-Admin-Password': adminPassword });
     rowEl.remove();
-    showAdminStatus(user.name + ' izbrisan.', 'green');
-    console.log('[ADMIN] Deleted user:', user.name);
+    showAdminStatus(fullName + ' izbrisan.', 'green');
+    console.log('[ADMIN] Deleted user:', fullName);
   } catch (err) {
     console.error('[ADMIN] Delete failed:', err.message);
     showAdminStatus('Napaka pri brisanju.', 'red');
