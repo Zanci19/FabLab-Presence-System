@@ -344,7 +344,7 @@ function normaliseNfcId(raw) {
   return String(raw).replace(/:/g, '').toUpperCase();
 }
 
-async function apiFetch(method, url, body, extraHeaders) {
+async function apiFetch(method, url, body, extraHeaders, allowStatuses) {
   const opts = {
     method,
     headers: { 'Content-Type': 'application/json', ...extraHeaders },
@@ -353,7 +353,7 @@ async function apiFetch(method, url, body, extraHeaders) {
     opts.body = JSON.stringify(body);
   }
   const res = await fetch(url, opts);
-  if (!res.ok) {
+  if (!res.ok && !(Array.isArray(allowStatuses) && allowStatuses.includes(res.status))) {
     const text = await res.text().catch(() => '');
     throw new Error('API ' + method + ' ' + url + ' → ' + res.status + ' ' + text);
   }
@@ -391,7 +391,13 @@ async function handleNfcRead(nfcId) {
     // Lookup user in DB
     let userResult;
     try {
-      userResult = await apiFetch('GET', '/api/user/' + encodeURIComponent(normId));
+      userResult = await apiFetch(
+        'GET',
+        '/api/user/' + encodeURIComponent(normId),
+        undefined,
+        undefined,
+        [404]
+      );
     } catch (err) {
       console.error('[NFC] API error during user lookup:', err.message);
       setClockHelperMessage('Napaka strežnika. Poskusi znova.', 'red', 2500);
@@ -495,8 +501,9 @@ function showGreeting(user) {
   console.log('[GREETING] Showing greeting for:', user.name);
   setClockState('');
   setClockHelperMessage(DEFAULT_HELPER_TEXT);
+  const firstName = String(user.name || '').trim().split(/\s+/)[0] || user.name;
   document.getElementById('greeting-text').innerHTML =
-    'Živjo ' + user.name + '.<br>Kaj delaš danes?';
+    'Živjo ' + firstName + '.<br>Kaj delaš danes?';
   showScreen('greeting');
 }
 
