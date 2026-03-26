@@ -65,6 +65,7 @@ userColumns = db.prepare('PRAGMA table_info(users)').all();
 const userColumnOrder = userColumns.map(col => col.name).join(',');
 const expectedUserColumnOrder = 'id,nfc_id,name,surname,gender,registered_at,last_seen,scan_count';
 if (userColumnOrder !== expectedUserColumnOrder) {
+  db.exec('PRAGMA foreign_keys = OFF');
   db.exec(`
     BEGIN;
     CREATE TABLE users_new (
@@ -84,6 +85,7 @@ if (userColumnOrder !== expectedUserColumnOrder) {
     ALTER TABLE users_new RENAME TO users;
     COMMIT;
   `);
+  db.exec('PRAGMA foreign_keys = ON');
   console.log('[DB] Rebuilt users table to normalize column order.');
 }
 db.exec(`
