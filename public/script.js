@@ -752,7 +752,7 @@ function showNameEntry() {
   const title = document.getElementById('name-entry-title');
 
   if (nameEntryFlow.mode === 'confirm-create') {
-    title.innerHTML = 'ID ključa ni povezan z računom.<br>Ustvari račun';
+    title.innerHTML = 'ID ključa ni povezan z računom.<br>Ustvari račun?';
     input.style.display = 'none';
     submitBtn.textContent = 'DA';
     cancelBtn.textContent = 'NE';
