@@ -412,7 +412,101 @@ function formatDate(date) {
 // API helpers
 // =============================================================================
 function normaliseNfcId(raw) {
-  return String(raw).replace(/:/g, '').toUpperCase();
+  const input = String(raw || '').trim();
+  if (!input) return '';
+
+  // Prefer grouped hex byte format if present anywhere in input.
+  const groupedHexMatch = input.match(/(?:[0-9a-fA-F]{2}[-:\s]){3,}[0-9a-fA-F]{2}/);
+  if (groupedHexMatch) {
+    return groupedHexMatch[0].replace(/[-:\s]/g, '').toUpperCase();
+  }
+
+  // Fallback for IDs like NFC001.
+  return input.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
+}
+
+// =============================================================================
+// Physical NFC reader support (keyboard-wedge style)
+// =============================================================================
+let wedgeBuffer = '';
+let wedgeLastKeyTs = 0;
+let wedgeTimer = null;
+const WEDGE_IDLE_FLUSH_MS = 80;
+
+function resetWedgeBuffer() {
+  wedgeBuffer = '';
+  wedgeLastKeyTs = 0;
+  if (wedgeTimer) {
+    clearTimeout(wedgeTimer);
+    wedgeTimer = null;
+  }
+}
+
+async function flushWedgeBuffer() {
+  const raw = wedgeBuffer;
+  resetWedgeBuffer();
+  if (!raw) return;
+
+  const activeScreen = document.querySelector('.screen.active');
+  const screenId = activeScreen?.id || '';
+  const nfcRelevantScreens = ['screen-clock', 'screen-admin', 'screen-intro'];
+  if (!nfcRelevantScreens.includes(screenId)) {
+    return;
+  }
+
+  const parsed = normaliseNfcId(raw);
+  if (parsed.length < 8) {
+    return;
+  }
+
+  console.log('[NFC] Keyboard-wedge scan captured:', raw, '=>', parsed);
+  await handleNfcRead(parsed);
+}
+
+function handleKeyboardWedgeInput(event) {
+  const activeEl = document.activeElement;
+  const isTypingIntoInput =
+    activeEl &&
+    (activeEl.tagName === 'INPUT' ||
+     activeEl.tagName === 'TEXTAREA' ||
+     activeEl.isContentEditable);
+  if (isTypingIntoInput) return;
+
+  // Reader usually terminates with Enter.
+  if (event.key === 'Enter') {
+    if (!wedgeBuffer) return;
+    event.preventDefault();
+    flushWedgeBuffer();
+    return;
+  }
+
+  // Support scanners that terminate with Tab.
+  if (event.key === 'Tab' && wedgeBuffer) {
+    event.preventDefault();
+    flushWedgeBuffer();
+    return;
+  }
+
+  // Capture only UID-like characters for wedge mode.
+  if (!/^[0-9a-zA-Z:\-\s]$/.test(event.key)) {
+    return;
+  }
+
+  const now = Date.now();
+  if (wedgeLastKeyTs && now - wedgeLastKeyTs > WEDGE_IDLE_FLUSH_MS) {
+    // Long pause means this is likely human typing, so reset.
+    wedgeBuffer = '';
+  }
+
+  wedgeLastKeyTs = now;
+  wedgeBuffer += event.key;
+
+  if (wedgeTimer) {
+    clearTimeout(wedgeTimer);
+  }
+  wedgeTimer = setTimeout(() => {
+    flushWedgeBuffer();
+  }, WEDGE_IDLE_FLUSH_MS);
 }
 
 async function apiFetch(method, url, body, extraHeaders) {
@@ -1236,6 +1330,8 @@ window.addEventListener('load', async () => {
 
   // Global keyboard shortcut: press 'A' on clock screen to open admin
   document.addEventListener('keydown', e => {
+    handleKeyboardWedgeInput(e);
+
     const activeScreen = document.querySelector('.screen.active');
     if (!activeScreen) return;
     const screenId = activeScreen.id;
