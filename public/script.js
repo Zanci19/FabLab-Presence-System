@@ -84,29 +84,41 @@ function playRandomKeyPressSound() {
   );
 }
 
-function playErrorBeep() {
-  // Two descending-pitch pulses — "wrong/error" double buzz
-  const ERROR_BEEP_BASE_HZ   = 180;  // starting frequency (Hz)
-  const ERROR_BEEP_STEP_HZ   = 30;   // lower each pulse by this amount
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.2].forEach((startOffset, i) => {
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'square';
-      osc.frequency.value = ERROR_BEEP_BASE_HZ - i * ERROR_BEEP_STEP_HZ;
-      gain.gain.setValueAtTime(0,    ctx.currentTime + startOffset);
-      gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + startOffset + 0.02);
-      gain.gain.linearRampToValueAtTime(0,    ctx.currentTime + startOffset + 0.18);
-      osc.start(ctx.currentTime + startOffset);
-      osc.stop(ctx.currentTime  + startOffset + 0.18);
-    });
-    console.log('[AUDIO] Playing error beep');
-  } catch (err) {
-    console.warn('[AUDIO] Error beep failed:', err.message);
+const FALLBACK_ERROR_SOUND_DURATION_MS = 900;
+let errorShakeTimeout = null;
+
+function shakeScreenError(durationMs = FALLBACK_ERROR_SOUND_DURATION_MS) {
+  document.body.style.setProperty('--error-shake-duration', durationMs + 'ms');
+  document.body.classList.remove('screen-shake-error');
+  void document.body.offsetWidth;
+  document.body.classList.add('screen-shake-error');
+
+  if (errorShakeTimeout) {
+    clearTimeout(errorShakeTimeout);
   }
+  errorShakeTimeout = setTimeout(() => {
+    document.body.classList.remove('screen-shake-error');
+  }, durationMs);
+}
+
+function playErrorBeep() {
+  const wrongSound = document.getElementById('audio-wrong');
+  if (!wrongSound) {
+    console.warn('[AUDIO] Missing #audio-wrong element.');
+    shakeScreenError();
+    return;
+  }
+
+  wrongSound.currentTime = 0;
+  const durationMs = Number.isFinite(wrongSound.duration) && wrongSound.duration > 0
+    ? Math.round(wrongSound.duration * 1000)
+    : FALLBACK_ERROR_SOUND_DURATION_MS;
+
+  shakeScreenError(durationMs);
+  wrongSound.play().catch(err => {
+    console.warn('[AUDIO] Could not play wrong sound:', err.message);
+  });
+  console.log('[AUDIO] Playing wrong/error sound');
 }
 
 // =============================================================================
