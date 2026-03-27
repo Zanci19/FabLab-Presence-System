@@ -529,6 +529,8 @@ async function startNfcScanning() {
       if (!serialNumber) return;
       console.log('[NFC] Web NFC tag detected. Serial:', serialNumber);
       const normId = normaliseNfcId(serialNumber);
+      // A 4-byte UID yields 8 hex chars; 7-byte UIDs (like DESFire cards) yield 14.
+      // Require at least 8 characters to filter out noise / incomplete reads.
       if (normId.length >= 8) {
         handleNfcRead(normId);
       }
