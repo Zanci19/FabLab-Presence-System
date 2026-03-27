@@ -169,10 +169,23 @@ app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html' }))
 app.use('/audio', express.static(path.join(__dirname, 'audio')));
 
 // ---------------------------------------------------------------------------
-// Helper: normalise NFC ID (strip colons, uppercase)
+// Helper: normalise NFC ID from readers / apps.
+// Accepts grouped hex UIDs (04:27:1B:02:B6:12:90, 04-27-..., 04 27 ...)
+// and plain IDs used in simulation/admin (NFC001, etc.).
 // ---------------------------------------------------------------------------
 function normaliseNfcId(raw) {
-  return String(raw).replace(/:/g, '').toUpperCase();
+  const input = String(raw || '').trim();
+  if (!input) return '';
+
+  // Prefer grouped hex byte format if present anywhere in the input
+  // (e.g. "UID: 04:27:1B:02:B6:12:90").
+  const groupedHexMatch = input.match(/(?:[0-9a-fA-F]{2}[-:\s]){3,}[0-9a-fA-F]{2}/);
+  if (groupedHexMatch) {
+    return groupedHexMatch[0].replace(/[-:\s]/g, '').toUpperCase();
+  }
+
+  // Fallback for generic alphanumeric identifiers.
+  return input.replace(/[^0-9a-zA-Z]/g, '').toUpperCase();
 }
 
 // Helper: get client IP
