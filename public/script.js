@@ -509,6 +509,39 @@ function handleKeyboardWedgeInput(event) {
   }, WEDGE_IDLE_FLUSH_MS);
 }
 
+// =============================================================================
+// Web NFC API (native NFC on Android/Chrome)
+// Reads the tag UID via NDEFReader.serialNumber — works even for DESFire cards
+// that carry no NDEF data (hasndef: false), because the UID is always exposed.
+// =============================================================================
+async function startNfcScanning() {
+  if (!('NDEFReader' in window)) {
+    console.log('[NFC] Web NFC API not supported in this browser.');
+    return;
+  }
+
+  try {
+    const ndef = new NDEFReader();
+    await ndef.scan();
+    console.log('[NFC] Web NFC scanning active.');
+
+    ndef.addEventListener('reading', ({ serialNumber }) => {
+      if (!serialNumber) return;
+      console.log('[NFC] Web NFC tag detected. Serial:', serialNumber);
+      const normId = normaliseNfcId(serialNumber);
+      if (normId.length >= 8) {
+        handleNfcRead(normId);
+      }
+    });
+
+    ndef.addEventListener('readingerror', () => {
+      console.warn('[NFC] Web NFC reading error — could not parse tag.');
+    });
+  } catch (err) {
+    console.warn('[NFC] Web NFC scan() failed:', err.message);
+  }
+}
+
 async function apiFetch(method, url, body, extraHeaders) {
   const opts = {
     method,
@@ -1359,5 +1392,7 @@ window.addEventListener('load', async () => {
     showScreen('intro');
     runIntro();
     refreshLogPanel();
+    // Start Web NFC scanning inside a user-gesture handler (required by the API).
+    startNfcScanning();
   });
 });
