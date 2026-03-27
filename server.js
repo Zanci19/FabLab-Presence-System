@@ -166,6 +166,7 @@ app.use(express.json());
 // Serve static frontend files from the dedicated public/ directory
 // (keeps server-side source files out of the web root)
 app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html' }));
+app.use('/audio', express.static(path.join(__dirname, 'audio')));
 
 // ---------------------------------------------------------------------------
 // Helper: normalise NFC ID (strip colons, uppercase)
