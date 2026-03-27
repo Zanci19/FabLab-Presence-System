@@ -55,11 +55,23 @@ const KEY_PRESS_SOUND_PATHS = Array.from(
   { length: 15 },
   (_, idx) => 'audio/key press' + (idx + 1) + '.ogg'
 );
+const ENTER_KEY_SOUND_PATHS = Array.from(
+  { length: 3 },
+  (_, idx) => '/audio/key press enter' + (idx + 1) + '.ogg'
+);
+const CLICK_SOUND_PATH = '/audio/click.ogg';
 const keyPressSoundPool = KEY_PRESS_SOUND_PATHS.map(path => {
   const audio = new Audio(path);
   audio.preload = 'auto';
   return audio;
 });
+const enterKeySoundPool = ENTER_KEY_SOUND_PATHS.map(path => {
+  const audio = new Audio(path);
+  audio.preload = 'auto';
+  return audio;
+});
+const clickSound = new Audio(CLICK_SOUND_PATH);
+clickSound.preload = 'auto';
 
 function playSound(id) {
   const el = document.getElementById('audio-' + id);
@@ -82,6 +94,29 @@ function playRandomKeyPressSound() {
   audio.play().catch(err =>
     console.warn('[AUDIO] Could not play key press:', err.message)
   );
+}
+
+function playRandomEnterKeySound() {
+  if (!enterKeySoundPool.length) return;
+  const randomIdx = Math.floor(Math.random() * enterKeySoundPool.length);
+  const baseAudio = enterKeySoundPool[randomIdx];
+  const audio = baseAudio.cloneNode();
+  audio.play().catch(err =>
+    console.warn('[AUDIO] Could not play enter key press:', err.message)
+  );
+}
+
+function playClickSound() {
+  const audio = clickSound.cloneNode();
+  audio.play().catch(err =>
+    console.warn('[AUDIO] Could not play click:', err.message)
+  );
+}
+
+function isTypingTarget(target) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return true;
+  return target.isContentEditable;
 }
 
 const FALLBACK_ERROR_SOUND_DURATION_MS = 900;
@@ -1334,6 +1369,21 @@ window.addEventListener('load', async () => {
 
   buildActivityGrid();
   buildSimPanel();
+
+  document.addEventListener('click', () => {
+    playClickSound();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      playRandomEnterKeySound();
+      return;
+    }
+
+    if (e.key.length === 1 && isTypingTarget(e.target) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      playRandomKeyPressSound();
+    }
+  });
 
   // Wire up name-entry screen
   document.getElementById('name-entry-submit').addEventListener('click', submitNameEntry);
