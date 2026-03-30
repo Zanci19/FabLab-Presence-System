@@ -1,0 +1,7 @@
+{
+  "animationsEnabled": true,
+  "logPanelEnabled": true,
+  "adminPassword": "admin",
+  "wifiSSID": "YourNetworkName",
+  "wifiPassword": "YourNetworkPassword"
+}
