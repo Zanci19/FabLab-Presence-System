@@ -68,7 +68,7 @@ static void send_error(AsyncWebServerRequest *req, int code, const char *msg)
 // WebSocket
 // ---------------------------------------------------------------------------
 static void on_ws_event(AsyncWebSocket *srv, AsyncWebSocketClient *client,
-                        AwsEventType type, void *, size_t)
+                        AwsEventType type, void *, uint8_t *, size_t)
 {
     if (type == WS_EVT_CONNECT)
         Serial.printf("[WS] Client #%u connected\n", client->id());
