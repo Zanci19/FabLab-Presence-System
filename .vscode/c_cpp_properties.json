@@ -1,0 +1,30 @@
+{
+  "configurations": [
+    {
+      "name": "ESP32 PlatformIO",
+      "compilerPath": "${env:USERPROFILE}\\.platformio\\packages\\toolchain-xtensa-esp-elf\\bin\\xtensa-esp32s3-elf-g++.exe",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "windows-gcc-x64",
+      "compileCommands": "${workspaceFolder}/esp32-firmware/.pio/build/fablab_esp32s3/compile_commands.json",
+      "includePath": [
+        "${workspaceFolder}/esp32-firmware/src",
+        "${workspaceFolder}/esp32-firmware/include",
+        "${workspaceFolder}/esp32-firmware/.pio/libdeps/fablab_esp32s3/**",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/**",
+        "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/**",
+        "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp-elf/**"
+      ],
+      "defines": [
+        "PLATFORMIO=60100",
+        "ARDUINO=10819",
+        "ARDUINO_ARCH_ESP32",
+        "ARDUINO_ESP32S3_DEV",
+        "BOARD_HAS_PSRAM",
+        "ESP32",
+        "LV_CONF_INCLUDE_SIMPLE"
+      ]
+    }
+  ],
+  "version": 4
+}

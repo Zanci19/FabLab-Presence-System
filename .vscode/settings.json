@@ -1,0 +1,5 @@
+{
+  "C_Cpp.default.configurationProvider": "platformio.platformio-ide",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/esp32-firmware/.pio/build/fablab_esp32s3/compile_commands.json",
+  "C_Cpp.errorSquiggles": "enabled"
+}
