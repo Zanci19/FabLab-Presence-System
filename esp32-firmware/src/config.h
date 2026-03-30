@@ -6,8 +6,8 @@
 #pragma once
 
 // --- WiFi credentials --------------------------------------------------------
-#define WIFI_SSID   "YourNetworkName"
-#define WIFI_PASS   "YourNetworkPassword"
+#define WIFI_SSID   "ASUS"
+#define WIFI_PASS   "tinzantosuz"
 
 // --- Admin -------------------------------------------------------------------
 // Default admin password (also stored in /data/settings.json on LittleFS)
