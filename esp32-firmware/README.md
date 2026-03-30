@@ -207,6 +207,7 @@ fully offline:
 | `LittleFS mount failed` | First flash after partition change | Run `pio run --target uploadfs` |
 | Clock shows 00:00:00 and `1970-01-01` | No NTP sync | Check WiFi credentials; device needs internet access |
 | Browser shows 404 | `data/www/` not uploaded | Run `pio run --target uploadfs` |
+| IntelliSense cannot find `Arduino.h`, `ESPAsyncWebServer.h`, etc. | VS Code C/C++ extension is not using PlatformIO build metadata | From `esp32-firmware/`, run `pio run -t compiledb` once, then reload VS Code (or use the committed `.vscode/` config in the repo root) |
 | Touch not working | GT911 I2C address wrong | Try `TOUCH_I2C_ADDR 0x5D` in `config.h` (if INT pulled HIGH) |
 
 ---
