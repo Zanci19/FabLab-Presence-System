@@ -674,10 +674,9 @@ static void cb_ne_cancel(lv_event_t *e) { (void)e; cancel_name_entry(); }
 
 static void cb_ne_kbd(lv_event_t *e)
 {
-    lv_obj_t *kbd = (lv_obj_t *)lv_event_get_target(e);
-    lv_keyboard_key_t key = lv_keyboard_get_selected_btn(kbd);
-    if (key == LV_KEYBOARD_KEY_OK || key == LV_KEYBOARD_KEY_ENTER)
-        submit_name_entry();
+    // LV_EVENT_READY fires when the keyboard's OK / Enter key is pressed (LVGL 8)
+    (void)e;
+    submit_name_entry();
 }
 
 static void build_name_entry_screen()
@@ -724,7 +723,7 @@ static void build_name_entry_screen()
     lv_obj_set_size(kbd_ne, LV_PCT(100), 220);
     lv_obj_set_style_bg_color(kbd_ne, C_BG, 0);
     lv_obj_set_style_text_color(kbd_ne, C_WHITE, 0);
-    lv_obj_add_event_cb(kbd_ne, cb_ne_kbd, LV_EVENT_VALUE_CHANGED, nullptr);
+    lv_obj_add_event_cb(kbd_ne, cb_ne_kbd, LV_EVENT_READY, nullptr);
 }
 
 // ---------------------------------------------------------------------------
@@ -891,10 +890,8 @@ static void cb_ap_cancel(lv_event_t *e)
 
 static void cb_ap_kbd(lv_event_t *e)
 {
-    lv_obj_t *kbd = (lv_obj_t *)lv_event_get_target(e);
-    lv_keyboard_key_t key = lv_keyboard_get_selected_btn(kbd);
-    if (key == LV_KEYBOARD_KEY_OK || key == LV_KEYBOARD_KEY_ENTER)
-        cb_ap_submit(e);
+    // LV_EVENT_READY fires when the keyboard's OK / Enter key is pressed (LVGL 8)
+    cb_ap_submit(e);
 }
 
 static void build_admin_pass_screen()
@@ -941,7 +938,7 @@ static void build_admin_pass_screen()
     lv_obj_set_size(kbd_ap, LV_PCT(100), 220);
     lv_obj_set_style_bg_color(kbd_ap, C_BG, 0);
     lv_obj_set_style_text_color(kbd_ap, C_WHITE, 0);
-    lv_obj_add_event_cb(kbd_ap, cb_ap_kbd, LV_EVENT_VALUE_CHANGED, nullptr);
+    lv_obj_add_event_cb(kbd_ap, cb_ap_kbd, LV_EVENT_READY, nullptr);
 }
 
 // ===========================================================================
