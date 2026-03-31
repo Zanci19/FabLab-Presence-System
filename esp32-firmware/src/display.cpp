@@ -165,7 +165,13 @@ void display_init()
 
     // --- RGB LCD ------------------------------------------------------------
     esp_lcd_rgb_panel_config_t panel_cfg = {};
-    panel_cfg.clk_src                  = LCD_CLK_SRC_XTAL;
+#ifdef LCD_CLK_SRC_PLL160M
+    // Use PLL160M as RGB clock source on ESP32-S3.
+    // XTAL (40 MHz) can produce invalid divider values for some pclk targets.
+    panel_cfg.clk_src                  = LCD_CLK_SRC_PLL160M;
+#else
+    panel_cfg.clk_src                  = LCD_CLK_SRC_DEFAULT;
+#endif
     panel_cfg.timings.pclk_hz          = LCD_PCLK_HZ;
     panel_cfg.timings.h_res            = LCD_WIDTH;
     panel_cfg.timings.v_res            = LCD_HEIGHT;
