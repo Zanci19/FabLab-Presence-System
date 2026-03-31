@@ -1,79 +1,311 @@
-[{
-	"resource": "/c:/Users/Zanci19/Desktop/fablab/esp32-firmware/src/api_server.cpp",
-	"owner": "C/C++: IntelliSense",
-	"code": "1696",
-	"severity": 8,
-	"message": "#include errors detected. Please update your includePath. Squiggles are disabled for this translation unit (C:\\Users\\Zanci19\\Desktop\\fablab\\esp32-firmware\\src\\api_server.cpp).",
-	"source": "C/C++",
-	"startLineNumber": 8,
-	"startColumn": 1,
-	"endLineNumber": 8,
-	"endColumn": 21,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/c:/Users/Zanci19/Desktop/fablab/esp32-firmware/src/api_server.cpp",
-	"owner": "C/C++: IntelliSense",
-	"code": "1696",
-	"severity": 8,
-	"message": "cannot open source file \"Arduino.h\" (dependency of \"storage.h\")",
-	"source": "C/C++",
-	"startLineNumber": 8,
-	"startColumn": 1,
-	"endLineNumber": 8,
-	"endColumn": 21,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/c:/Users/Zanci19/Desktop/fablab/esp32-firmware/src/api_server.cpp",
-	"owner": "C/C++: IntelliSense",
-	"code": "1696",
-	"severity": 8,
-	"message": "cannot open source file \"Arduino.h\" (dependency of \"nfc_reader.h\")",
-	"source": "C/C++",
-	"startLineNumber": 9,
-	"startColumn": 1,
-	"endLineNumber": 9,
-	"endColumn": 24,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/c:/Users/Zanci19/Desktop/fablab/esp32-firmware/src/api_server.cpp",
-	"owner": "C/C++: IntelliSense",
-	"code": "1696",
-	"severity": 8,
-	"message": "cannot open source file \"ESPAsyncWebServer.h\"",
-	"source": "C/C++",
-	"startLineNumber": 11,
-	"startColumn": 1,
-	"endLineNumber": 11,
-	"endColumn": 31,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/c:/Users/Zanci19/Desktop/fablab/esp32-firmware/src/api_server.cpp",
-	"owner": "C/C++: IntelliSense",
-	"code": "1696",
-	"severity": 8,
-	"message": "cannot open source file \"ArduinoJson.h\"",
-	"source": "C/C++",
-	"startLineNumber": 12,
-	"startColumn": 1,
-	"endLineNumber": 12,
-	"endColumn": 25,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/c:/Users/Zanci19/Desktop/fablab/esp32-firmware/src/api_server.cpp",
-	"owner": "C/C++: IntelliSense",
-	"code": "1696",
-	"severity": 8,
-	"message": "cannot open source file \"LittleFS.h\"",
-	"source": "C/C++",
-	"startLineNumber": 13,
-	"startColumn": 1,
-	"endLineNumber": 13,
-	"endColumn": 22,
-	"modelVersionId": 1,
-	"origin": "extHost1"
-}]
+C:\Users\Zanci19\Desktop\fablab\esp32-firmware>pio run --target upload
+Processing fablab_esp32s3 (platform: espressif32; board: esp32-s3-devkitc-1; framework: arduino)
+------------------------------------------------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (6.13.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES:
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b
+ - tool-esptoolpy @ 2.41100.0 (4.11.0)
+ - tool-mkfatfs @ 2.0.1
+ - tool-mklittlefs @ 1.203.210628 (2.3)
+ - tool-mkspiffs @ 2.230.0 (2.30)
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5
+ - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ deep, Compatibility ~ soft
+Found 39 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- lvgl @ 8.4.0
+|-- ArduinoJson @ 7.4.3
+|-- AsyncTCP-esphome @ 2.1.4
+|-- ESPAsyncWebServer-esphome @ 3.4.0
+|-- MFRC522 @ 1.4.12
+|-- NTPClient @ 3.2.1
+|-- LittleFS @ 2.0.0
+|-- Wire @ 2.0.0
+|-- WiFi @ 2.0.0
+|-- SPI @ 2.0.0
+Building in release mode
+Compiling .pio\build\fablab_esp32s3\src\display.cpp.o
+Compiling .pio\build\fablab_esp32s3\src\ui.cpp.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\renesas\lv_gpu_d2_draw_label.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\renesas\lv_gpu_d2_ra6m3.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_arc.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_bg.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_composite.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_img.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_label.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/../../draw/../misc/lv_bidi.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/../../draw/lv_draw_label.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/lv_gpu_d2_draw_label.c:11:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/../../draw/../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_layer.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/lv_gpu_d2_ra6m3.h:15,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/lv_gpu_d2_ra6m3.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/renesas/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_line.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_mask.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl.c:10:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_polygon.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_arc.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_bg.c:10:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_rect.c.o
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_composite.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_stack_blur.c.o
+~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_texture_cache.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_img.c:10:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sdl\lv_draw_sdl_utils.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_label.c:10:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_layer.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\stm32_dma2d\lv_gpu_stm32_dma2d.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_line.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_mask.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_polygon.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_arc.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_rect.c:10:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_stack_blur.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_stack_blur.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_blend.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_dither.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_texture_cache.c:10:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/lv_draw_sdl_utils.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sdl/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_gradient.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/stm32_dma2d/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/stm32_dma2d/lv_gpu_stm32_dma2d.h:13,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/stm32_dma2d/lv_gpu_stm32_dma2d.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/stm32_dma2d/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_img.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_layer.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../lv_draw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_arc.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_letter.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_line.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_polygon.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../core/../misc/lv_area.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../core/lv_obj_pos.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_dither.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_dither.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../core/../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_rect.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\sw\lv_draw_sw_transform.c.o
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_gradient.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_gradient.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\draw\swm341_dma2d\lv_gpu_swm341_dma2d.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_img.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_layer.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_letter.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_polygon.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_line.c:10:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_rect.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_blend.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/lv_draw_sw_transform.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/sw/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\extra\layouts\flex\lv_flex.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/swm341_dma2d/../../misc/lv_color.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/swm341_dma2d/lv_gpu_swm341_dma2d.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/draw/swm341_dma2d/lv_gpu_swm341_dma2d.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/draw/swm341_dma2d/../../misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\extra\layouts\grid\lv_grid.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\extra\libs\bmp\lv_bmp.c.o
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/flex/../flex/../../../core/lv_obj.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/flex/../flex/lv_flex.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/flex/../lv_layouts.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/flex/lv_flex.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/flex/../flex/../../../core/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/grid/../flex/../../../core/lv_obj.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/grid/../flex/lv_flex.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/grid/../lv_layouts.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/grid/lv_grid.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/extra/layouts/grid/../flex/../../../core/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/bmp/../../../../src/misc/lv_log.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/bmp/../../../../lvgl.h:25,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/bmp/../../../lvgl.h:17,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/bmp/lv_bmp.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/bmp/../../../../src/misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+src/display.cpp: In function 'void display_init()':
+src/display.cpp:179:21: error: 'struct esp_lcd_rgb_panel_config_t::<unnamed>' has no member named 'double_fb'
+     panel_cfg.flags.double_fb          = true;
+                     ^~~~~~~~~
+src/display.cpp:187:21: error: 'struct esp_lcd_rgb_panel_config_t::<unnamed>' has no member named 'refresh_on_demand'
+     panel_cfg.flags.refresh_on_demand  = false;
+                     ^~~~~~~~~~~~~~~~~
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\extra\libs\ffmpeg\lv_ffmpeg.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\extra\libs\freetype\lv_freetype.c.o
+Compiling .pio\build\fablab_esp32s3\lib503\lvgl\extra\libs\fsdrv\lv_fs_fatfs.c.o
+*** [.pio\build\fablab_esp32s3\src\display.cpp.o] Error 1
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/ffmpeg/../../../../src/misc/lv_log.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/ffmpeg/../../../../lvgl.h:25,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/ffmpeg/../../../lvgl.h:17,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/ffmpeg/lv_ffmpeg.h:15,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/ffmpeg/lv_ffmpeg.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/ffmpeg/../../../../src/misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/freetype/../../../../src/misc/lv_log.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/freetype/../../../../lvgl.h:25,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/freetype/../../../lvgl.h:17,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/freetype/lv_freetype.h:15,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/freetype/lv_freetype.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/freetype/../../../../src/misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+In file included from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/fsdrv/../../../../src/misc/lv_log.h:16,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/fsdrv/../../../../lvgl.h:25,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/fsdrv/../../../lvgl.h:17,
+                 from .pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/fsdrv/lv_fs_fatfs.c:9:
+.pio/libdeps/fablab_esp32s3/lvgl/src/extra/libs/fsdrv/../../../../src/misc/../lv_conf_internal.h:46:17: note: #pragma message: Possible failure to include lv_conf.h, please read the comment in this file if you get errors
+         #pragma message("Possible failure to include lv_conf.h, please read the comment in this file if you get errors")
+                 ^~~~~~~
+src/ui.cpp: In function 'void build_clock_screen()':
+src/ui.cpp:515:27: error: 'LV_FLEX_ALIGN_STRETCH' was not declared in this scope
+                           LV_FLEX_ALIGN_STRETCH, LV_FLEX_ALIGN_STRETCH);
+                           ^~~~~~~~~~~~~~~~~~~~~
+src/ui.cpp:515:27: note: suggested alternative: 'LV_GRID_ALIGN_STRETCH'
+                           LV_FLEX_ALIGN_STRETCH, LV_FLEX_ALIGN_STRETCH);
+                           ^~~~~~~~~~~~~~~~~~~~~
+                           LV_GRID_ALIGN_STRETCH
+src/ui.cpp:529:5: error: 'lv_obj_set_style_long_press_time' was not declared in this scope
+     lv_obj_set_style_long_press_time(left, ADMIN_LONG_PRESS_MS, 0);
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/ui.cpp:529:5: note: suggested alternative: 'lv_obj_set_style_anim_time'
+     lv_obj_set_style_long_press_time(left, ADMIN_LONG_PRESS_MS, 0);
+     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     lv_obj_set_style_anim_time
+src/ui.cpp: In function 'void build_admin_screen()':
+src/ui.cpp:1072:27: error: 'LV_FLEX_ALIGN_STRETCH' was not declared in this scope
+                           LV_FLEX_ALIGN_STRETCH, LV_FLEX_ALIGN_STRETCH);
+                           ^~~~~~~~~~~~~~~~~~~~~
+src/ui.cpp:1072:27: note: suggested alternative: 'LV_GRID_ALIGN_STRETCH'
+                           LV_FLEX_ALIGN_STRETCH, LV_FLEX_ALIGN_STRETCH);
+                           ^~~~~~~~~~~~~~~~~~~~~
+                           LV_GRID_ALIGN_STRETCH
+*** [.pio\build\fablab_esp32s3\src\ui.cpp.o] Error 1
+============================================== [FAILED] Took 3.23 seconds ==============================================
+
+C:\Users\Zanci19\Desktop\fablab\esp32-firmware>
