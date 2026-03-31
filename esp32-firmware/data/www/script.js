@@ -1358,6 +1358,75 @@ async function exportAdminCSV() {
 }
 
 // =============================================================================
+// WebSocket — receive NFC events from the ESP32 hardware reader
+// =============================================================================
+let _ws = null;
+let _wsReconnectTimer = null;
+const WS_RECONNECT_DELAY_MS = 3000;
+
+function connectWebSocket() {
+  if (_wsReconnectTimer) {
+    clearTimeout(_wsReconnectTimer);
+    _wsReconnectTimer = null;
+  }
+
+  // Only connect when served from the ESP32 (i.e. not from localhost dev server)
+  const host = window.location.host;
+  if (!host || host.startsWith('localhost') || host.startsWith('127.')) {
+    console.log('[WS] Skipping WebSocket — running on localhost.');
+    return;
+  }
+
+  const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + host + '/ws';
+  console.log('[WS] Connecting to', wsUrl);
+
+  try {
+    _ws = new WebSocket(wsUrl);
+  } catch (err) {
+    console.warn('[WS] Could not create WebSocket:', err.message);
+    _scheduleWsReconnect();
+    return;
+  }
+
+  _ws.addEventListener('open', () => {
+    console.log('[WS] Connected.');
+  });
+
+  _ws.addEventListener('message', event => {
+    let msg;
+    try {
+      msg = JSON.parse(event.data);
+    } catch {
+      console.warn('[WS] Non-JSON message:', event.data);
+      return;
+    }
+    if (msg.type === 'nfc' && msg.uid) {
+      console.log('[WS] NFC event received:', msg.uid);
+      handleNfcRead(String(msg.uid));
+    }
+  });
+
+  _ws.addEventListener('close', () => {
+    console.warn('[WS] Connection closed — reconnecting in', WS_RECONNECT_DELAY_MS, 'ms');
+    _ws = null;
+    _scheduleWsReconnect();
+  });
+
+  _ws.addEventListener('error', () => {
+    console.warn('[WS] Connection error — will reconnect after close.');
+    // 'close' fires right after, which will schedule the reconnect
+  });
+}
+
+function _scheduleWsReconnect() {
+  if (_wsReconnectTimer) return;
+  _wsReconnectTimer = setTimeout(() => {
+    _wsReconnectTimer = null;
+    connectWebSocket();
+  }, WS_RECONNECT_DELAY_MS);
+}
+
+// =============================================================================
 // Initialisation
 // =============================================================================
 window.addEventListener('load', async () => {
@@ -1366,6 +1435,8 @@ window.addEventListener('load', async () => {
   console.log('[INIT] Activities:', ACTIVITIES.join(', '));
 
   await loadConfig();
+
+  connectWebSocket();
 
   buildActivityGrid();
   buildSimPanel();
