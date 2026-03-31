@@ -129,7 +129,7 @@ void setup()
 
     // Force the first LVGL render so the display shows valid content before
     // the backlight is enabled.  Without this the RGB-panel DMA would scan
-    // uninitialised PSRAM (white) for the entire duration of setup() — which
+    // uninitialized PSRAM (white) for the entire duration of setup() — which
     // includes a WiFi connection attempt that can block up to ~15 seconds.
     lv_timer_handler();
     display_set_backlight(100);

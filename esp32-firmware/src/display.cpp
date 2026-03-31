@@ -245,7 +245,7 @@ void display_init()
     ESP_ERROR_CHECK(esp_lcd_panel_reset(s_panel));
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_panel));
 
-    // Backlight: initialised at 0 % — caller enables after first UI render
+    // Backlight: initialized at 0 % — caller enables after first UI render
     backlight_init();
 
     // --- LVGL ---------------------------------------------------------------
