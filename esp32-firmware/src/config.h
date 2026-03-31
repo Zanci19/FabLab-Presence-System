@@ -47,8 +47,8 @@
 #define LCD_PIN_PCLK   42
 #define LCD_PIN_BL     2     // Backlight PWM
 
-// Pixel clock (Hz) — 16 MHz is stable on most Sunton panels
-#define LCD_PCLK_HZ    (16 * 1000 * 1000)
+// Pixel clock (Hz) — keep conservative to avoid invalid RGB divider asserts
+#define LCD_PCLK_HZ    (12 * 1000 * 1000)
 
 // Horizontal timing (pixels)
 #define LCD_HSYNC_PW   4
