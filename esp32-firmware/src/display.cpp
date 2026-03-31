@@ -42,9 +42,10 @@ static void lvgl_flush_cb(lv_disp_drv_t *drv, const lv_area_t *area,
 // ---------------------------------------------------------------------------
 // GT911 touch — minimal I²C driver
 // ---------------------------------------------------------------------------
-static const uint8_t GT911_ADDR        = TOUCH_I2C_ADDR;
+static uint8_t GT911_ADDR              = TOUCH_I2C_ADDR;
 static const uint16_t GT911_REG_STATUS = 0x814E;
 static const uint16_t GT911_REG_PT1    = 0x8150;
+static bool s_touch_available          = false;
 
 static void gt911_write_reg(uint16_t reg, uint8_t val)
 {
@@ -55,19 +56,34 @@ static void gt911_write_reg(uint16_t reg, uint8_t val)
     Wire.endTransmission();
 }
 
-static uint8_t gt911_read_reg(uint16_t reg)
+static bool gt911_read_reg(uint16_t reg, uint8_t *value_out)
 {
     Wire.beginTransmission(GT911_ADDR);
     Wire.write(reg >> 8);
     Wire.write(reg & 0xFF);
-    Wire.endTransmission(false);
-    Wire.requestFrom((uint8_t)GT911_ADDR, (uint8_t)1);
-    return Wire.available() ? Wire.read() : 0;
+    if (Wire.endTransmission(false) != 0) return false;
+    if (Wire.requestFrom((uint8_t)GT911_ADDR, (uint8_t)1) != 1) return false;
+    if (!Wire.available()) return false;
+    *value_out = Wire.read();
+    return true;
+}
+
+static bool gt911_probe(uint8_t addr)
+{
+    GT911_ADDR = addr;
+    uint8_t status = 0;
+    return gt911_read_reg(GT911_REG_STATUS, &status);
 }
 
 static bool gt911_read_touch(lv_coord_t *x_out, lv_coord_t *y_out)
 {
-    uint8_t status = gt911_read_reg(GT911_REG_STATUS);
+    if (!s_touch_available) return false;
+
+    uint8_t status = 0;
+    if (!gt911_read_reg(GT911_REG_STATUS, &status)) {
+        return false;
+    }
+
     if (!(status & 0x80) || (status & 0x0F) == 0) {
         return false;   // no new data or no touches
     }
@@ -76,8 +92,8 @@ static bool gt911_read_touch(lv_coord_t *x_out, lv_coord_t *y_out)
     Wire.beginTransmission(GT911_ADDR);
     Wire.write(GT911_REG_PT1 >> 8);
     Wire.write(GT911_REG_PT1 & 0xFF);
-    Wire.endTransmission(false);
-    Wire.requestFrom((uint8_t)GT911_ADDR, (uint8_t)6);
+    if (Wire.endTransmission(false) != 0) return false;
+    if (Wire.requestFrom((uint8_t)GT911_ADDR, (uint8_t)6) != 6) return false;
 
     uint8_t buf[6] = {};
     for (int i = 0; i < 6 && Wire.available(); i++) buf[i] = Wire.read();
@@ -163,6 +179,21 @@ void display_init()
     delay(100);
     gpio_set_direction((gpio_num_t)TOUCH_PIN_INT, GPIO_MODE_INPUT);
 
+    // Probe supported GT911 addresses; some boards boot at 0x5D even when
+    // reset sequencing requests 0x14.
+    if (gt911_probe(TOUCH_I2C_ADDR)) {
+        s_touch_available = true;
+    } else {
+        const uint8_t alt_addr = (TOUCH_I2C_ADDR == 0x14) ? 0x5D : 0x14;
+        if (gt911_probe(alt_addr)) {
+            s_touch_available = true;
+            Serial.printf("[DISPLAY] GT911 detected at 0x%02X (fallback)\n", GT911_ADDR);
+        } else {
+            s_touch_available = false;
+            Serial.println("[DISPLAY] GT911 not detected; touch input disabled.");
+        }
+    }
+
     // --- RGB LCD ------------------------------------------------------------
     esp_lcd_rgb_panel_config_t panel_cfg = {};
 #ifdef LCD_CLK_SRC_PLL160M
@@ -242,7 +273,9 @@ void display_init()
     lv_indev_drv_init(&s_touch_drv);
     s_touch_drv.type    = LV_INDEV_TYPE_POINTER;
     s_touch_drv.read_cb = lvgl_touch_read_cb;
-    lv_indev_drv_register(&s_touch_drv);
+    if (s_touch_available) {
+        lv_indev_drv_register(&s_touch_drv);
+    }
 
     Serial.println("[DISPLAY] RGB LCD + GT911 touch + LVGL ready.");
 }
