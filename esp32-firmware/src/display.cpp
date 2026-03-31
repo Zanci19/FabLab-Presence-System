@@ -175,7 +175,7 @@ void display_init()
     // Older Arduino/ESP-IDF combinations may not define LCD_CLK_SRC_DEFAULT.
     panel_cfg.clk_src                  = LCD_CLK_SRC_XTAL;
 #else
-    panel_cfg.clk_src                  = 0;
+    // Keep the struct's zero-initialized default clock source.
 #endif
     panel_cfg.timings.pclk_hz          = LCD_PCLK_HZ;
     panel_cfg.timings.h_res            = LCD_WIDTH;
