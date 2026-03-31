@@ -92,9 +92,6 @@ void api_server_push_nfc(const String &uid)
 // ---------------------------------------------------------------------------
 static void register_routes()
 {
-    // --- Static files from LittleFS /www ------------------------------------
-    s_server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html");
-
     // === GET /api/settings ===================================================
     s_server.on("/api/settings", HTTP_GET, [](AsyncWebServerRequest *req) {
         AppSettings s = storage_load_settings();
@@ -376,6 +373,11 @@ static void register_routes()
             req->send(resp);
         }
     );
+
+    // --- Static files from LittleFS /www ------------------------------------
+    // Keep this after API routes so /api/* requests are not consumed by the
+    // catch-all static handler (which would produce 404/white-screen on boot).
+    s_server.serveStatic("/", LittleFS, "/www/").setDefaultFile("index.html");
 
     // 404 fallback
     s_server.onNotFound([](AsyncWebServerRequest *req) {
