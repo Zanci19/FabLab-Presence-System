@@ -164,7 +164,7 @@ void display_init()
 
     // --- RGB LCD ------------------------------------------------------------
     esp_lcd_rgb_panel_config_t panel_cfg = {};
-    panel_cfg.clk_src                  = LCD_CLK_SRC_DEFAULT;
+    panel_cfg.clk_src                  = LCD_CLK_SRC_XTAL;
     panel_cfg.timings.pclk_hz          = LCD_PCLK_HZ;
     panel_cfg.timings.h_res            = LCD_WIDTH;
     panel_cfg.timings.v_res            = LCD_HEIGHT;
@@ -176,9 +176,7 @@ void display_init()
     panel_cfg.timings.vsync_front_porch = LCD_VSYNC_FP;
     panel_cfg.timings.flags.pclk_active_neg = true;
     panel_cfg.data_width               = 16;
-    panel_cfg.bits_per_pixel           = 16;
-    panel_cfg.num_fbs                  = 2;
-    panel_cfg.bounce_buffer_size_px    = 10 * LCD_WIDTH;
+    panel_cfg.flags.double_fb          = true;
     panel_cfg.sram_trans_align         = 8;
     panel_cfg.psram_trans_align        = 64;
     panel_cfg.hsync_gpio_num           = LCD_PIN_HSYNC;
@@ -186,7 +184,6 @@ void display_init()
     panel_cfg.de_gpio_num              = LCD_PIN_DE;
     panel_cfg.pclk_gpio_num            = LCD_PIN_PCLK;
     panel_cfg.disp_gpio_num            = GPIO_NUM_NC;
-    panel_cfg.flags.pclk_active_neg    = true;
     panel_cfg.flags.refresh_on_demand  = false;
     panel_cfg.flags.fb_in_psram        = true;
 
