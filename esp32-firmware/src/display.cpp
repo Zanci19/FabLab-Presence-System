@@ -10,6 +10,7 @@
 #include <Wire.h>
 #include <driver/gpio.h>
 #include <driver/ledc.h>
+#include <esp_idf_version.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_lcd_panel_rgb.h>
 
@@ -176,7 +177,9 @@ void display_init()
     panel_cfg.timings.vsync_front_porch = LCD_VSYNC_FP;
     panel_cfg.timings.flags.pclk_active_neg = true;
     panel_cfg.data_width               = 16;
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
     panel_cfg.num_fbs                  = 2;
+#endif
     panel_cfg.sram_trans_align         = 8;
     panel_cfg.psram_trans_align        = 64;
     panel_cfg.hsync_gpio_num           = LCD_PIN_HSYNC;
