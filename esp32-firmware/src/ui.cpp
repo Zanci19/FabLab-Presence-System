@@ -512,7 +512,7 @@ static void build_clock_screen()
     lv_obj_add_style(row, &st_screen, 0);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row, LV_FLEX_ALIGN_START,
-                          LV_FLEX_ALIGN_STRETCH, LV_FLEX_ALIGN_STRETCH);
+                          LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     // --- Left (clock-main) ---
     lv_obj_t *left = lv_obj_create(row);
@@ -526,7 +526,6 @@ static void build_clock_screen()
 
     // Long-press on the clock area → admin
     lv_obj_add_flag(left, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_set_style_long_press_time(left, ADMIN_LONG_PRESS_MS, 0);
     lv_obj_add_event_cb(left, cb_clock_long_press, LV_EVENT_LONG_PRESSED, nullptr);
 
     // Clock time label (use Montserrat 48 — see README for larger custom font)
@@ -1069,7 +1068,7 @@ static void build_admin_screen()
     screen_base(s);
     lv_obj_set_flex_flow(s, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(s, LV_FLEX_ALIGN_START,
-                          LV_FLEX_ALIGN_STRETCH, LV_FLEX_ALIGN_STRETCH);
+                          LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     // Header
     lv_obj_t *header = lv_obj_create(s);
