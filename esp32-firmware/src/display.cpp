@@ -169,8 +169,13 @@ void display_init()
     // Use PLL160M as RGB clock source on ESP32-S3.
     // XTAL (40 MHz) can produce invalid divider values for some pclk targets.
     panel_cfg.clk_src                  = LCD_CLK_SRC_PLL160M;
-#else
+#elif defined(LCD_CLK_SRC_DEFAULT)
     panel_cfg.clk_src                  = LCD_CLK_SRC_DEFAULT;
+#elif defined(LCD_CLK_SRC_XTAL)
+    // Older Arduino/ESP-IDF combinations may not define LCD_CLK_SRC_DEFAULT.
+    panel_cfg.clk_src                  = LCD_CLK_SRC_XTAL;
+#else
+    panel_cfg.clk_src                  = 0;
 #endif
     panel_cfg.timings.pclk_hz          = LCD_PCLK_HZ;
     panel_cfg.timings.h_res            = LCD_WIDTH;
