@@ -177,8 +177,10 @@ void display_init()
     panel_cfg.timings.vsync_front_porch = LCD_VSYNC_FP;
     panel_cfg.timings.flags.pclk_active_neg = true;
     panel_cfg.data_width               = 16;
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
-    panel_cfg.num_fbs                  = 2;
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0)
+    panel_cfg.num_fbs                  = 2;   // introduced in IDF 5.1
+#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    panel_cfg.flags.double_fb          = true; // IDF 5.0.x equivalent
 #endif
     panel_cfg.sram_trans_align         = 8;
     panel_cfg.psram_trans_align        = 64;
