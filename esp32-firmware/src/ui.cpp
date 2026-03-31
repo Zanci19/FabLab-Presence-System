@@ -73,10 +73,39 @@ static String        g_ne_full_name;
 // Config
 static AppSettings g_settings;
 
+// ---------------------------------------------------------------------------
+// Diacritic helper — LVGL Montserrat fonts only cover ASCII (U+0020-U+007E).
+// Slovenian diacritics (Latin Extended-A) are absent, producing "glyph not
+// found" warnings.  Translate them to their ASCII base letters before any
+// text is handed to LVGL.
+// ---------------------------------------------------------------------------
+static String sl_to_ascii(const String &src)
+{
+    String out;
+    out.reserve(src.length());
+    const uint8_t *p = reinterpret_cast<const uint8_t *>(src.c_str());
+    while (*p) {
+        if (p[0] == 0xC4 && p[1]) {
+            if      (p[1] == 0x8C) { out += 'C'; p += 2; }  // Č
+            else if (p[1] == 0x8D) { out += 'c'; p += 2; }  // č
+            else                   { out += static_cast<char>(*p++); }
+        } else if (p[0] == 0xC5 && p[1]) {
+            if      (p[1] == 0xA0) { out += 'S'; p += 2; }  // Š
+            else if (p[1] == 0xA1) { out += 's'; p += 2; }  // š
+            else if (p[1] == 0xBD) { out += 'Z'; p += 2; }  // Ž
+            else if (p[1] == 0xBE) { out += 'z'; p += 2; }  // ž
+            else                   { out += static_cast<char>(*p++); }
+        } else {
+            out += static_cast<char>(*p++);
+        }
+    }
+    return out;
+}
+
 // Activities list (matches script.js)
 static const char *ACTIVITIES[] = {
     "3D tiskanje", "Programiranje", "Modeliranje",
-    "Zabušavanje",  "Učenje",        "Maintenance",
+    "Zabusavanje",  "Ucenje",        "Maintenance",
     "Drugo",
 };
 static const int ACTIVITY_COUNT = 7;
@@ -191,7 +220,7 @@ static void styles_init()
     lv_style_set_text_color(&st_btn_orange, C_BG);
     lv_style_set_text_font(&st_btn_orange, &lv_font_montserrat_16);
 
-    // Danger button (PREKLIČI / IZBRIŠI)
+    // Danger button (PREKLICI / IZBRISI)
     lv_style_init(&st_btn_danger);
     lv_style_set_bg_color(&st_btn_danger, C_BG);
     lv_style_set_bg_opa(&st_btn_danger, LV_OPA_COVER);
@@ -352,7 +381,7 @@ static void refresh_log_panel(lv_timer_t *)
             }
             char buf[64];
             snprintf(buf, sizeof(buf), "%-18s %02d:%02d",
-                     s.name.substring(0, 18).c_str(), hh, mm);
+                     sl_to_ascii(s.name).substring(0, 18).c_str(), hh, mm);
             lv_label_set_text(lbl_log_entries[i], buf);
             lv_obj_clear_flag(lbl_log_entries[i], LV_OBJ_FLAG_HIDDEN);
         } else {
@@ -694,7 +723,7 @@ static void build_name_entry_screen()
     lv_obj_set_style_pad_row(s, 20, 0);
 
     lbl_ne_title = lv_label_create(s);
-    lv_label_set_text(lbl_ne_title, "Vpiši ime in priimek");
+    lv_label_set_text(lbl_ne_title, "Vpisi ime in priimek");
     lv_obj_set_style_text_font(lbl_ne_title, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(lbl_ne_title, C_ORANGE, 0);
     lv_obj_set_style_text_letter_space(lbl_ne_title, 4, 0);
@@ -719,7 +748,7 @@ static void build_name_entry_screen()
                           LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     btn_ne_submit = make_btn(row, "POTRDI",  true,  220, 55, cb_ne_submit, nullptr);
-    btn_ne_cancel = make_btn(row, "PREKLIČI", false, 220, 55, cb_ne_cancel, nullptr);
+    btn_ne_cancel = make_btn(row, "PREKLICI", false, 220, 55, cb_ne_cancel, nullptr);
     lv_obj_add_style(btn_ne_cancel, &st_btn_danger, 0);
 
     // On-screen keyboard
@@ -738,24 +767,24 @@ static void update_ne_ui()
 {
     if (g_ne_mode == NE_CONFIRM_CREATE) {
         lv_label_set_text(lbl_ne_title,
-            "ID kljuca ni povezan z računom.\nUstvari račun?");
+            "ID kljuca ni povezan z racunom.\nUstvari racun?");
         lv_obj_add_flag(ta_ne,  LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(kbd_ne, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(lv_obj_get_child(btn_ne_submit, 0), "DA");
         lv_label_set_text(lv_obj_get_child(btn_ne_cancel, 0), "NE");
     } else if (g_ne_mode == NE_COLLECT_NAME) {
-        lv_label_set_text(lbl_ne_title, "Vpiši ime in priimek");
+        lv_label_set_text(lbl_ne_title, "Vpisi ime in priimek");
         lv_obj_clear_flag(ta_ne,  LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(kbd_ne, LV_OBJ_FLAG_HIDDEN);
         lv_textarea_set_text(ta_ne, "");
         lv_label_set_text(lv_obj_get_child(btn_ne_submit, 0), "POTRDI");
-        lv_label_set_text(lv_obj_get_child(btn_ne_cancel, 0), "PREKLIČI");
+        lv_label_set_text(lv_obj_get_child(btn_ne_cancel, 0), "PREKLICI");
     } else if (g_ne_mode == NE_COLLECT_GENDER) {
         lv_label_set_text(lbl_ne_title, "Izberi spol");
         lv_obj_add_flag(ta_ne,  LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(kbd_ne, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(lv_obj_get_child(btn_ne_submit, 0), "ZENSKA");
-        lv_label_set_text(lv_obj_get_child(btn_ne_cancel, 0), "MOŠKI");
+        lv_label_set_text(lv_obj_get_child(btn_ne_cancel, 0), "MOSKI");
     }
 }
 
@@ -854,13 +883,13 @@ static void register_pending_user(const String &full_name, const char *gender)
         show_screen(SCR_ADMIN);
         char msg[64];
         snprintf(msg, sizeof(msg), "Dodan: %s %s",
-                 name.c_str(), surname.c_str());
+                 sl_to_ascii(name).c_str(), sl_to_ascii(surname).c_str());
         show_admin_status(msg, false);
         return;
     }
 
     // Normal flow: auto-login the newly created user
-    set_helper(build_full_name(u).c_str(), C_WHITE, 0);
+    set_helper(sl_to_ascii(build_full_name(u)).c_str(), C_WHITE, 0);
     do_login(u);
     g_nfc_flow_active = false;
 }
@@ -935,7 +964,7 @@ static void build_admin_pass_screen()
                           LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     make_btn(row, "VSTOPI",  true,  200, 55, cb_ap_submit, nullptr);
-    lv_obj_t *cancel = make_btn(row, "PREKLIČI", false, 200, 55, cb_ap_cancel, nullptr);
+    lv_obj_t *cancel = make_btn(row, "PREKLICI", false, 200, 55, cb_ap_cancel, nullptr);
     lv_obj_add_style(cancel, &st_btn_danger, 0);
 
     kbd_ap = lv_keyboard_create(s);
@@ -988,7 +1017,7 @@ static void cb_admin_deluser(lv_event_t *e)
         return;
     }
     for (auto &u : users) {
-        String display = build_full_name(u) + "  [" + u.nfc_id + "]";
+        String display = sl_to_ascii(build_full_name(u)) + "  [" + u.nfc_id + "]";
         lv_obj_t *btn = lv_list_add_btn(list_deluser, nullptr, display.c_str());
         lv_obj_add_style(btn, &st_btn_crt, 0);
         lv_obj_set_style_text_color(btn, C_RED, 0);
@@ -1032,7 +1061,7 @@ static void cb_admin_logs(lv_event_t *e)
         const Session &s = sessions[i];
         char id_str[12]; snprintf(id_str, sizeof(id_str), "%d", s.id);
         lv_table_set_cell_value(table_logs, i + 1, 0, id_str);
-        lv_table_set_cell_value(table_logs, i + 1, 1, s.name.substring(0,14).c_str());
+        lv_table_set_cell_value(table_logs, i + 1, 1, sl_to_ascii(s.name).substring(0,14).c_str());
         lv_table_set_cell_value(table_logs, i + 1, 2, s.date.c_str());
 
         // Login HH:MM
@@ -1124,8 +1153,8 @@ static void build_admin_screen()
     lv_obj_set_grid_dsc_array(cont_menu, menu_col, menu_row);
     lv_obj_set_style_pad_all(cont_menu, 12, 0);
 
-    const char *menu_labels[] = { "＋ DODAJ KARTO", "✕ IZBRIŠI KARTO",
-                                   "≡ VPISI DNEVNIK", "↓ IZVOZI CSV" };
+    const char *menu_labels[] = { "+ DODAJ KARTO", "X IZBRISI KARTO",
+                                   "= VPISI DNEVNIK", "v IZVOZI CSV" };
     lv_event_cb_t menu_cbs[]  = { cb_admin_adduser, cb_admin_deluser,
                                    cb_admin_logs,    cb_admin_export };
 
@@ -1160,7 +1189,7 @@ static void build_admin_screen()
     lv_obj_set_style_text_font(lbl_adduser_status, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(lbl_adduser_status, C_ORANGE, 0);
 
-    make_btn(cont_adduser, "PREKLIČI", false, 220, 55,
+    make_btn(cont_adduser, "PREKLICI", false, 220, 55,
              cb_admin_adduser_cancel, nullptr);
 
     // === DELETE-USER view ===
@@ -1275,8 +1304,8 @@ static void do_logout(const User &user, int session_id)
 static void show_greeting(const User &user)
 {
     char buf[80];
-    snprintf(buf, sizeof(buf), "Zivjo %s.\nKaj delaš danes?",
-             user.name.c_str());
+    snprintf(buf, sizeof(buf), "Zivjo %s.\nKaj delas danes?",
+             sl_to_ascii(user.name).c_str());
     lv_label_set_text(lbl_greeting, buf);
     show_screen(SCR_GREETING);
 }
@@ -1299,8 +1328,8 @@ static void handle_nfc_read(const char *nfc_id)
         User existing;
         if (storage_find_user(norm_id, existing)) {
             char msg[64];
-            snprintf(msg, sizeof(msg), "Kartica že registrirana: %s",
-                     build_full_name(existing).c_str());
+            snprintf(msg, sizeof(msg), "Kartica ze registrirana: %s",
+                     sl_to_ascii(build_full_name(existing)).c_str());
             show_admin_status(msg, true);
             show_admin_view(AV_MENU);
             return;
@@ -1337,10 +1366,10 @@ static void handle_nfc_read(const char *nfc_id)
     // Check for open session today
     Session active;
     if (storage_find_active_session(norm_id, today_key_str(), active)) {
-        set_helper(build_full_name(user).c_str(), C_ORANGE, 0);
+        set_helper(sl_to_ascii(build_full_name(user)).c_str(), C_ORANGE, 0);
         do_logout(user, active.id);
     } else {
-        set_helper(build_full_name(user).c_str(), C_WHITE, 0);
+        set_helper(sl_to_ascii(build_full_name(user)).c_str(), C_WHITE, 0);
         do_login(user);
     }
     g_nfc_flow_active = false;
