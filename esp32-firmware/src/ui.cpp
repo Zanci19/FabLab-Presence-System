@@ -323,7 +323,7 @@ static void set_helper(const char *text, lv_color_t col, uint32_t duration_ms)
 
     if (duration_ms > 0) {
         helper_timer = lv_timer_create([](lv_timer_t *t) {
-            lv_label_set_text(lbl_helper, "Prisloni ključ za vstop/izstop...");
+            lv_label_set_text(lbl_helper, "Prisloni kljuc za vstop/izstop...");
             lv_obj_set_style_text_color(lbl_helper, C_WHITE, 0);
             lv_timer_del(t);
             helper_timer = nullptr;
@@ -550,7 +550,7 @@ static void build_clock_screen()
 
     // Helper text
     lbl_helper = lv_label_create(left);
-    lv_label_set_text(lbl_helper, "Prisloni ključ za vstop/izstop...");
+    lv_label_set_text(lbl_helper, "Prisloni kljuc za vstop/izstop...");
     lv_obj_set_style_text_font(lbl_helper, &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(lbl_helper, C_WHITE, 0);
     lv_obj_set_style_text_letter_space(lbl_helper, 3, 0);
@@ -738,7 +738,7 @@ static void update_ne_ui()
 {
     if (g_ne_mode == NE_CONFIRM_CREATE) {
         lv_label_set_text(lbl_ne_title,
-            "ID ključa ni povezan z računom.\nUstvari račun?");
+            "ID kljuca ni povezan z računom.\nUstvari račun?");
         lv_obj_add_flag(ta_ne,  LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(kbd_ne, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(lv_obj_get_child(btn_ne_submit, 0), "DA");
@@ -754,7 +754,7 @@ static void update_ne_ui()
         lv_label_set_text(lbl_ne_title, "Izberi spol");
         lv_obj_add_flag(ta_ne,  LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(kbd_ne, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(lv_obj_get_child(btn_ne_submit, 0), "ŽENSKA");
+        lv_label_set_text(lv_obj_get_child(btn_ne_submit, 0), "ZENSKA");
         lv_label_set_text(lv_obj_get_child(btn_ne_cancel, 0), "MOŠKI");
     }
 }
@@ -795,7 +795,7 @@ static void cancel_name_entry()
         g_nfc_flow_active = false;
         g_ne_mode = NE_CONFIRM_CREATE;
         show_screen(SCR_CLOCK);
-        set_helper("Prisloni ključ za vstop/izstop...", C_WHITE, 0);
+        set_helper("Prisloni kljuc za vstop/izstop...", C_WHITE, 0);
         return;
     }
     if (g_ne_mode == NE_COLLECT_GENDER) {
@@ -875,7 +875,7 @@ static void cb_ap_submit(lv_event_t *e)
     String entered = String(lv_textarea_get_text(ta_ap));
     if (entered != s.admin_password) {
         lv_textarea_set_text(ta_ap, "");
-        set_helper("Napačno geslo!", C_RED, HELPER_MSG_DURATION_MS);
+        set_helper("Napacno geslo!", C_RED, HELPER_MSG_DURATION_MS);
         Serial.println("[ADMIN] Wrong password attempt.");
         return;
     }
@@ -1275,7 +1275,7 @@ static void do_logout(const User &user, int session_id)
 static void show_greeting(const User &user)
 {
     char buf[80];
-    snprintf(buf, sizeof(buf), "Živjo %s.\nKaj delaš danes?",
+    snprintf(buf, sizeof(buf), "Zivjo %s.\nKaj delaš danes?",
              user.name.c_str());
     lv_label_set_text(lbl_greeting, buf);
     show_screen(SCR_GREETING);
@@ -1394,7 +1394,7 @@ void ui_clock_tick()
 
     // Date: "Ponedeljek, 1. Jan 2025"
     static const char *DAYS[]   = { "Nedelja","Ponedeljek","Torek","Sreda",
-                                     "Četrtek","Petek","Sobota" };
+                                     "Cetrtek","Petek","Sobota" };
     static const char *MONTHS[] = { "Jan","Feb","Mar","Apr","Maj","Jun",
                                      "Jul","Avg","Sep","Okt","Nov","Dec" };
     char dbuf[64];
