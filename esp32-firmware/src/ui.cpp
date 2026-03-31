@@ -36,6 +36,7 @@
 // ---------------------------------------------------------------------------
 static void show_screen(int id);
 static void handle_nfc_read(const char *nfc_id);
+static void run_intro_sequence();
 
 // ---------------------------------------------------------------------------
 // Screen IDs
@@ -401,10 +402,8 @@ static void register_pending_user(const String &full_name, const char *gender);
 // ===========================================================================
 // SCREEN: START
 // ===========================================================================
-static void cb_start_click(lv_event_t *e)
+static void run_intro_sequence()
 {
-    (void)e;
-    Serial.println("[UI] START pressed — running intro");
     show_screen(SCR_INTRO);
 
     // Reset intro state
@@ -443,6 +442,13 @@ static void cb_start_click(lv_event_t *e)
     }, 70, nullptr);  // 70 ms tick
 
     lv_timer_set_repeat_count(intro_timer, -1);
+}
+
+static void cb_start_click(lv_event_t *e)
+{
+    (void)e;
+    Serial.println("[UI] START pressed — running intro");
+    run_intro_sequence();
 }
 
 static void build_start_screen()
@@ -1363,13 +1369,14 @@ void ui_init()
     // Load settings
     g_settings = storage_load_settings();
 
-    // Start on the start screen
-    lv_scr_load(scr[SCR_START]);
+    // Start on the local LVGL UI immediately. If touch is unavailable,
+    // the intro still transitions to the clock screen automatically.
+    run_intro_sequence();
 
     // Trigger an initial log panel populate (after WiFi / time is up)
     refresh_log_panel(nullptr);
 
-    Serial.println("[UI] All screens built — showing START screen.");
+    Serial.println("[UI] All screens built — running INTRO sequence.");
 }
 
 void ui_clock_tick()
