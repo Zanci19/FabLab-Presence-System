@@ -147,7 +147,7 @@ static void backlight_init()
     channel.speed_mode = LEDC_LOW_SPEED_MODE;
     channel.channel    = BL_CHANNEL;
     channel.timer_sel  = BL_TIMER;
-    channel.duty       = 255;
+    channel.duty       = 0;    // start off; caller enables after first render
     channel.hpoint     = 0;
     ledc_channel_config(&channel);
 }
@@ -245,9 +245,8 @@ void display_init()
     ESP_ERROR_CHECK(esp_lcd_panel_reset(s_panel));
     ESP_ERROR_CHECK(esp_lcd_panel_init(s_panel));
 
-    // Backlight on (full brightness)
+    // Backlight: initialized at 0 % — caller enables after first UI render
     backlight_init();
-    display_set_backlight(100);
 
     // --- LVGL ---------------------------------------------------------------
     lv_init();
