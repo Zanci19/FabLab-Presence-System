@@ -68,15 +68,28 @@ static bool wifi_connect(const AppSettings &settings, uint32_t timeout_ms = 1500
 static WiFiUDP s_ntp_udp;
 static NTPClient s_ntp(s_ntp_udp, NTP_SERVER, NTP_UTC_OFFSET + NTP_DST_OFFSET);
 
-static void ntp_sync()
+static bool ntp_sync(uint8_t retries = 10, uint16_t delay_ms = 500)
 {
-    if (WiFi.status() != WL_CONNECTED) return;
+    if (WiFi.status() != WL_CONNECTED) return false;
     s_ntp.begin();
-    s_ntp.update();
-    time_t epoch = (time_t)s_ntp.getEpochTime();
-    struct timeval tv = { epoch, 0 };
-    settimeofday(&tv, nullptr);
-    Serial.printf("[NTP] Time synced: %s", ctime(&epoch));
+    s_ntp.setUpdateInterval(60000); // 1 min
+
+    for (uint8_t i = 0; i < retries; i++) {
+        if (s_ntp.forceUpdate()) {
+            time_t epoch = (time_t)s_ntp.getEpochTime();
+            // Ignore clearly invalid timestamps near UNIX epoch.
+            if (epoch > 1700000000) {
+                struct timeval tv = { epoch, 0 };
+                settimeofday(&tv, nullptr);
+                Serial.printf("[NTP] Time synced: %s", ctime(&epoch));
+                return true;
+            }
+        }
+        delay(delay_ms);
+    }
+
+    Serial.println("[NTP] Sync failed; keeping current system time.");
+    return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,8 +129,11 @@ void setup()
 
     // 6. WiFi + NTP + HTTP server
     if (wifi_connect(settings)) {
-        ntp_sync();
-        storage_purge_old_sessions();  // purge after time is valid
+        if (ntp_sync()) {
+            storage_purge_old_sessions();  // purge after time is valid
+        } else {
+            Serial.println("[MAIN] Skipping session purge until valid time is available.");
+        }
         api_server_init();
         Serial.printf("[MAIN] Web UI available at http://%s/\n",
                       WiFi.localIP().toString().c_str());
@@ -169,9 +185,6 @@ void loop()
     if (WiFi.status() == WL_CONNECTED &&
         now - s_ntp_resync_last >= NTP_RESYNC_INTERVAL_MS) {
         s_ntp_resync_last = now;
-        s_ntp.update();
-        time_t epoch = (time_t)s_ntp.getEpochTime();
-        struct timeval tv = { epoch, 0 };
-        settimeofday(&tv, nullptr);
+        ntp_sync(3, 200);
     }
 }
