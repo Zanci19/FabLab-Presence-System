@@ -13,9 +13,15 @@
 #define LV_COLOR_DEPTH 16         // RGB565 — native format of the RGB LCD
 
 // --- Memory ------------------------------------------------------------------
-// Use standard malloc/free (backed by PSRAM via the Arduino heap)
-#define LV_MEM_CUSTOM 0
-#define LV_MEM_SIZE   (256U * 1024U)   // 256 KB LVGL heap (in PSRAM)
+// Use heap allocation instead of LVGL's static RAM arena.
+// This removes a large .bss allocation from internal DRAM and lets the
+// allocator place blocks in PSRAM when available.
+#define LV_MEM_CUSTOM 1
+#define LV_MEM_CUSTOM_INCLUDE "stdlib.h"
+#define LV_MEM_CUSTOM_ALLOC   malloc
+#define LV_MEM_CUSTOM_FREE    free
+#define LV_MEM_CUSTOM_REALLOC realloc
+#define LV_MEM_CUSTOM_GET_SIZE 0
 
 // --- HAL tick ----------------------------------------------------------------
 #define LV_TICK_CUSTOM 1
